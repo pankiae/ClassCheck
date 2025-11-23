@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded shadow-md">
+    <h2 class="text-2xl font-bold mb-6">Invitation Generated</h2>
+    <p class="mb-4">Share this link with the teacher:</p>
+    <div class="bg-gray-100 p-4 rounded break-all">
+        <a href="{{ invite_link }}" class="text-blue-500 hover:text-blue-700">{{ invite_link }}</a>
+    </div>
+</div>
+{% endblock %}

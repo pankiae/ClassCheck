@@ -41,7 +41,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "users",
+    "teacher",
+    "student",
 ]
+
+AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -58,7 +63,7 @@ ROOT_URLCONF = "classcheck.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -76,9 +81,15 @@ WSGI_APPLICATION = "classcheck.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-POSTGRESQL_URL = env("POSTGRESQL_URL")
-print(POSTGRESQL_URL)
-DATABASES = {"default": env.db("POSTGRESQL_URL")}
+# POSTGRESQL_URL = env("POSTGRESQL_URL")
+# print(POSTGRESQL_URL)
+# DATABASES = {"default": env.db("POSTGRESQL_URL")}
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
 
 
 # Password validation
