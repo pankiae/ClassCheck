@@ -103,6 +103,11 @@ class Department(models.Model):
     def __str__(self):
         return f"{self.name} ({self.session})"
 
+    def save(self, *args, **kwargs):
+        if self.name:
+            self.name = self.name.lower()
+        super().save(*args, **kwargs)
+
 
 class StudentClass(
     models.Model
@@ -118,6 +123,11 @@ class StudentClass(
     def __str__(self):
         return f"{self.name} - {self.department.name}"
 
+    def save(self, *args, **kwargs):
+        if self.name:
+            self.name = self.name.lower()
+        super().save(*args, **kwargs)
+
 
 class Subject(models.Model):
     name = models.CharField(max_length=100)
@@ -130,3 +140,8 @@ class Subject(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.student_class.name})"
+
+    def save(self, *args, **kwargs):
+        if self.name:
+            self.name = self.name.lower()
+        super().save(*args, **kwargs)
