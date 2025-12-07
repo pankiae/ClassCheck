@@ -110,16 +110,8 @@ class Department(models.Model):
         if self.name:
             self.name = self.name.lower()
 
-        # Deduplication logic
-        original_name = self.name
-        counter = 1
-        while (
-            Department.objects.filter(name=self.name, session=self.session)
-            .exclude(pk=self.pk)
-            .exists()
-        ):
-            self.name = f"{original_name}-{counter}"
-            counter += 1
+        # Deduplication logic REDACTED - Strict uniqueness enforced in View
+        # We rely on unique_together constraints or pre-checks
 
         super().save(*args, **kwargs)
 

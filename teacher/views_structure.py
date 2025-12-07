@@ -74,11 +74,16 @@ def add_department(request):
                 session.is_active = True
                 session.save()
 
-        Department.objects.create(name=dept_name, session=session)
-        messages.success(
-            request,
-            f"Department '{dept_name}' added to session '{session.year_range}'.",
-        )
+        if Department.objects.filter(name=dept_name, session=session).exists():
+            messages.error(
+                request, f"Department '{dept_name}' already exists in this session."
+            )
+        else:
+            Department.objects.create(name=dept_name, session=session)
+            messages.success(
+                request,
+                f"Department '{dept_name}' added to session '{session.year_range}'.",
+            )
 
     return redirect("manage_structure")
 
