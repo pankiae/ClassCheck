@@ -2,8 +2,10 @@ import uuid
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.views.generic import CreateView, TemplateView
+from django.urls import reverse_lazy
 from .models import Invitation, User
-from .forms import InviteTeacherForm, RegisterForm
+from .forms import InviteTeacherForm, RegisterForm, TeacherSignUpForm, StudentSignUpForm
 from .decorators import admin_required
 from student.models import Enrollment
 from teacher.models import Class
@@ -70,3 +72,47 @@ def superuser_dashboard(request):
         'students': students,
         'classes': classes
     })
+
+def landing_page(request):
+    if request.user.is_authenticated:
+        return redirect('role_based_redirect')
+    return render(request, 'users/landing.html')
+
+class TeacherSignUpView(CreateView):
+    model = User
+    form_class = TeacherSignUpForm
+    template_name = 'users/register.html'
+    
+    def get_context_data(self, **kwargs):
+        kwargs['user_type'] = 'Teacher'
+        return super().get_context_data(**kwargs)
+
+    def form_valid(self, form):
+        user = form.save()
+        login(self.request, user)
+        return redirect('teacher_dashboard')
+
+class StudentSignUpView(CreateView):
+    model = User
+    form_class = StudentSignUpForm
+    template_name = 'users/register.html'
+    
+    def get_context_data(self, **kwargs):
+        kwargs['user_type'] = 'Student'
+        return super().get_context_data(**kwargs)
+
+    def form_valid(self, form):
+        user = form.save()
+        login(self.request, user)
+        return redirect('student_dashboard')
+
+@login_required
+def role_based_redirect(request):
+    user = request.user
+    if user.is_teacher():
+        return redirect('teacher_dashboard')
+    elif user.is_student():
+        return redirect('student_dashboard')
+    elif user.is_admin():
+        return redirect('superuser_dashboard')
+    return redirect('landing')
