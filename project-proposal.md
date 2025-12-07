@@ -73,5 +73,3 @@ session [2025-2026]
             subject-1 [admin will provide the subject name]
             subject-2 [admin will provide the subject name]
             subject-3 [admin will provide the subject name]
-    
-            

@@ -109,6 +109,18 @@ class Department(models.Model):
     def save(self, *args, **kwargs):
         if self.name:
             self.name = self.name.lower()
+
+        # Deduplication logic
+        original_name = self.name
+        counter = 1
+        while (
+            Department.objects.filter(name=self.name, session=self.session)
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            self.name = f"{original_name}-{counter}"
+            counter += 1
+
         super().save(*args, **kwargs)
 
 
@@ -130,8 +142,21 @@ class StudentClass(
         return f"{self.name} - {self.department.name}"
 
     def save(self, *args, **kwargs):
-        if self.name:
-            self.name = self.name.lower()
+        # Strict naming: {department.name}-{serial}
+        # We ignore provided name or overwrite it.
+        base_name = self.department.name.lower()
+        counter = 1
+        new_name = f"{base_name}-{counter}"
+
+        while (
+            StudentClass.objects.filter(name=new_name, department=self.department)
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            counter += 1
+            new_name = f"{base_name}-{counter}"
+
+        self.name = new_name
         super().save(*args, **kwargs)
 
 
@@ -153,4 +178,16 @@ class Subject(models.Model):
     def save(self, *args, **kwargs):
         if self.name:
             self.name = self.name.lower()
+
+        # Deduplication logic
+        original_name = self.name
+        counter = 1
+        while (
+            Subject.objects.filter(name=self.name, student_class=self.student_class)
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            self.name = f"{original_name}-{counter}"
+            counter += 1
+
         super().save(*args, **kwargs)
