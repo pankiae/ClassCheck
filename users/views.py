@@ -1,8 +1,10 @@
 import uuid
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, TemplateView
@@ -30,11 +32,26 @@ def invite_teacher(request):
             invitation.token = uuid.uuid4()
             invitation.role = User.Role.TEACHER
             invitation.save()
-            # In a real app, send email here. For now, just show the link.
+
             invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
-            return render(
-                request, "users/invite_success.html", {"invite_link": invite_link}
-            )
+
+            # Send email
+            subject = "Invitation to join ClassCheck as a Teacher"
+            message = f"Hi {invitation.first_name},\n\nYou have been invited to join ClassCheck. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
+
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [invitation.email],
+                    fail_silently=False,
+                )
+                messages.success(request, f"Invitation sent to {invitation.email}")
+            except Exception as e:
+                messages.error(request, f"Error sending email: {e}")
+
+            return redirect("invite_teacher")
     else:
         form = InviteTeacherForm()
     return render(request, "users/invite_teacher.html", {"form": form})
@@ -42,12 +59,19 @@ def invite_teacher(request):
 
 def register(request, token):
     invitation = get_object_or_404(Invitation, token=token, is_used=False)
+
+    if not invitation.is_valid():
+        messages.error(request, "This invitation has expired or is invalid.")
+        return redirect("landing")  # Or a specific error page
+
     if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
             user.role = invitation.role
             user.email = invitation.email
+            user.first_name = invitation.first_name
+            user.last_name = invitation.last_name
             user.save()
             invitation.is_used = True
             invitation.save()
