@@ -96,6 +96,8 @@ class Department(models.Model):
     session = models.ForeignKey(
         AcademicSession, on_delete=models.CASCADE, related_name="departments"
     )
+    is_active = models.BooleanField(default=True)
+    is_dead = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -109,6 +111,8 @@ class StudentClass(
     department = models.ForeignKey(
         Department, on_delete=models.CASCADE, related_name="classes"
     )
+    is_active = models.BooleanField(default=True)
+    is_dead = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -120,6 +124,8 @@ class Subject(models.Model):
     student_class = models.ForeignKey(
         StudentClass, on_delete=models.CASCADE, related_name="subjects"
     )
+    is_active = models.BooleanField(default=True)
+    is_dead = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

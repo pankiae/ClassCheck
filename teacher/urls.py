@@ -27,4 +27,20 @@ urlpatterns = [
     ),
     path("structure/class/add/", views_structure.add_class, name="add_class"),
     path("structure/subject/add/", views_structure.add_subject, name="add_subject"),
+    # Delete Routes
+    path(
+        "structure/department/<int:dept_id>/delete/",
+        views_structure.delete_department,
+        name="delete_department",
+    ),
+    path(
+        "structure/class/<int:class_id>/delete/",
+        views_structure.delete_class,
+        name="delete_class",
+    ),
+    path(
+        "structure/subject/<int:subject_id>/delete/",
+        views_structure.delete_subject,
+        name="delete_subject",
+    ),
 ]

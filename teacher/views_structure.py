@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import AcademicSession, Department, StudentClass, Subject
@@ -13,9 +14,23 @@ def is_admin(user):
 
 @user_passes_test(is_admin)
 def manage_structure(request):
-    sessions = AcademicSession.objects.all().order_by("-created_at")
-    # If no session exists, we might want to prompt or show empty state.
-    # The requirement says "present session will automatically create if any department is added".
+    sessions = AcademicSession.objects.prefetch_related(
+        Prefetch(
+            "departments",
+            queryset=Department.objects.filter(is_dead=False).prefetch_related(
+                Prefetch(
+                    "classes",
+                    queryset=StudentClass.objects.filter(
+                        is_dead=False
+                    ).prefetch_related(
+                        Prefetch(
+                            "subjects", queryset=Subject.objects.filter(is_dead=False)
+                        )
+                    ),
+                )
+            ),
+        )
+    ).order_by("-created_at")
 
     current_year = datetime.now().year
     next_year = current_year + 1
@@ -90,4 +105,46 @@ def add_subject(request):
             request, f"Subject '{subject_name}' added to '{student_class.name}'."
         )
 
+    return redirect("manage_structure")
+
+
+@user_passes_test(is_admin)
+def delete_department(request, dept_id):
+    dept = get_object_or_404(Department, id=dept_id)
+    if "restore" in request.POST:
+        dept.is_active = True
+        dept.save()
+        messages.success(request, f"Department '{dept.name}' restored.")
+    else:
+        dept.is_active = False
+        dept.save()
+        messages.warning(request, f"Department '{dept.name}' deactivated.")
+    return redirect("manage_structure")
+
+
+@user_passes_test(is_admin)
+def delete_class(request, class_id):
+    student_class = get_object_or_404(StudentClass, id=class_id)
+    if "restore" in request.POST:
+        student_class.is_active = True
+        student_class.save()
+        messages.success(request, f"Class '{student_class.name}' restored.")
+    else:
+        student_class.is_active = False
+        student_class.save()
+        messages.warning(request, f"Class '{student_class.name}' deactivated.")
+    return redirect("manage_structure")
+
+
+@user_passes_test(is_admin)
+def delete_subject(request, subject_id):
+    subject = get_object_or_404(Subject, id=subject_id)
+    if "restore" in request.POST:
+        subject.is_active = True
+        subject.save()
+        messages.success(request, f"Subject '{subject.name}' restored.")
+    else:
+        subject.is_active = False
+        subject.save()
+        messages.warning(request, f"Subject '{subject.name}' deactivated.")
     return redirect("manage_structure")

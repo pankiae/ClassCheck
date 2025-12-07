@@ -1,10 +1,20 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<script>
+    function confirmDelete(formId, itemName) {
+        if (confirm(`Are you sure you want to remove the ${itemName}?`)) {
+            if (confirm(`Are you REALLY sure? This will remove the ${itemName} from active views.`)) {
+                console.log("Submitting form:", formId); // Debug logging
+                document.getElementById(formId).submit();
+            }
+        }
+    }
+</script>
 <div class="max-w-6xl mx-auto">
+    <!-- ... header ... -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-800">Academic Structure</h1>
-        <!-- Optional: Button to manually add session if needed, though requirements say auto-create -->
     </div>
 
     <div class="space-y-6">
@@ -36,36 +46,82 @@
                 {% if session.departments.all %}
                 <div class="space-y-4">
                     {% for dept in session.departments.all %}
-                    <div class="border rounded-md p-4 bg-white relative">
+                    <div class="border rounded-md p-4 bg-white relative {% if not dept.is_active %}opacity-50 grayscale{% endif %}">
                         <div class="flex justify-between items-start mb-3 border-b pb-2">
-                            <h3 class="font-bold text-lg text-gray-800">{{ dept.name }}</h3>
+                            <h3 class="font-bold text-lg text-gray-800">
+                                {{ dept.name }} 
+                                {% if not dept.is_active %}(Inactive){% endif %}
+                            </h3>
                             
-                            <!-- Add Class Form -->
-                            <form action="{% url 'add_class' %}" method="POST" class="flex gap-2">
-                                {% csrf_token %}
-                                <input type="hidden" name="department_id" value="{{ dept.id }}">
-                                <input type="text" name="name" placeholder="Class Name" required 
-                                    class="px-2 py-1 border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-green-500">
-                                <button type="submit" class="px-2 py-1 bg-green-600 text-white rounded-md text-xs hover:bg-green-700">
-                                    + Class
-                                </button>
-                            </form>
+                            <div class="flex gap-2 items-center">
+                                <!-- Add Class Form -->
+                                {% if dept.is_active %}
+                                <form action="{% url 'add_class' %}" method="POST" class="flex gap-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="department_id" value="{{ dept.id }}">
+                                    <input type="text" name="name" placeholder="Class Name" required 
+                                        class="px-2 py-1 border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <button type="submit" class="px-2 py-1 bg-green-600 text-white rounded-md text-xs hover:bg-green-700">
+                                        + Class
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                <!-- Delete/Restore Department -->
+                                <form id="delete-dept-{{ dept.id }}" action="{% url 'delete_department' dept.id %}" method="POST">
+                                    {% csrf_token %}
+                                    {% if dept.is_active %}
+                                    <button type="button" onclick="confirmDelete('delete-dept-{{ dept.id }}', 'Department')" 
+                                        class="text-red-500 hover:text-red-700 font-bold px-2">
+                                        &times;
+                                    </button>
+                                    {% else %}
+                                    <button type="submit" name="restore" value="true" class="text-green-600 hover:text-green-800 text-xs font-semibold">
+                                        Restore
+                                    </button>
+                                    {% endif %}
+                                </form>
+                            </div>
                         </div>
 
                         <!-- Classes List -->
                         <div class="ml-4 space-y-3">
                             {% for cls in dept.classes.all %}
-                            <div class="flex items-start gap-4 p-2 bg-gray-50 rounded hover:bg-gray-100 transition">
-                                <span class="font-semibold text-gray-700 min-w-[100px] mt-1">{{ cls.name }}</span>
+                            <div class="flex items-start gap-4 p-2 bg-gray-50 rounded hover:bg-gray-100 transition {% if not cls.is_active %}opacity-50{% endif %}">
+                                <span class="font-semibold text-gray-700 min-w-[100px] mt-1">
+                                    {{ cls.name }}
+                                </span>
                                 
                                 <div class="flex-grow flex flex-wrap gap-2 items-center">
                                     {% for subject in cls.subjects.all %}
-                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                                        {{ subject.name }}
-                                    </span>
+                                        {% if subject.is_active %}
+                                        <div class="relative group">
+                                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs pr-6">
+                                                {{ subject.name }}
+                                                <form id="delete-subj-{{ subject.id }}" action="{% url 'delete_subject' subject.id %}" method="POST" class="absolute right-1 top-0.5">
+                                                    {% csrf_token %}
+                                                    <button type="button" onclick="confirmDelete('delete-subj-{{ subject.id }}', 'Subject')" 
+                                                        class="text-red-500 hover:text-red-700 font-bold text-xs leading-none">
+                                                        &times;
+                                                    </button>
+                                                </form>
+                                            </span>
+                                        </div>
+                                        {% else %}
+                                         <div class="relative group opacity-60">
+                                            <span class="px-2 py-1 bg-gray-200 text-gray-600 rounded text-xs pr-12 line-through">
+                                                {{ subject.name }}
+                                            </span>
+                                            <form action="{% url 'delete_subject' subject.id %}" method="POST" class="inline ml-1">
+                                                {% csrf_token %}
+                                                <button type="submit" name="restore" value="true" class="text-green-600 hover:text-green-800 text-[10px]">Restore</button>
+                                            </form>
+                                        </div>
+                                        {% endif %}
                                     {% endfor %}
 
                                     <!-- Add Subject Form -->
+                                    {% if cls.is_active %}
                                     <form action="{% url 'add_subject' %}" method="POST" class="flex items-center gap-1">
                                         {% csrf_token %}
                                         <input type="hidden" name="class_id" value="{{ cls.id }}">
@@ -75,7 +131,23 @@
                                             +
                                         </button>
                                     </form>
+                                    {% endif %}
                                 </div>
+                                
+                                <!-- Delete/Restore Class -->
+                                <form id="delete-class-{{ cls.id }}" action="{% url 'delete_class' cls.id %}" method="POST" class="ml-auto">
+                                    {% csrf_token %}
+                                    {% if cls.is_active %}
+                                        <button type="button" onclick="confirmDelete('delete-class-{{ cls.id }}', 'Class')" 
+                                            class="text-red-500 hover:text-red-700 font-bold px-2">
+                                            &times;
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" name="restore" value="true" class="text-green-600 hover:text-green-800 text-xs font-semibold">
+                                            Restore
+                                        </button>
+                                    {% endif %}
+                                </form>
                             </div>
                             {% empty %}
                             <p class="text-sm text-gray-400 italic">No classes yet.</p>
