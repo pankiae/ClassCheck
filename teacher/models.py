@@ -169,6 +169,14 @@ class Subject(models.Model):
     is_dead = models.BooleanField(default=False)
     days = models.JSONField(default=list)
     timing = models.TimeField(null=True, blank=True)
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="subjects",
+    )
+    teacher_email = models.EmailField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

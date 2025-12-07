@@ -1,9 +1,12 @@
 from datetime import datetime
 
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
+
+from users.models import Invitation
 
 from .models import AcademicSession, Department, StudentClass, Subject
 
@@ -101,11 +104,40 @@ def add_subject(request):
         days_str = request.POST.get("days")
         days = days_str.split(",") if days_str else []
         timing = request.POST.get("timing")
+        teacher_email = request.POST.get("teacher_email")
 
         student_class = get_object_or_404(StudentClass, id=class_id)
-        Subject.objects.create(
-            name=subject_name, student_class=student_class, days=days, timing=timing
+        subject = Subject.objects.create(
+            name=subject_name,
+            student_class=student_class,
+            days=days,
+            timing=timing,
+            teacher_email=teacher_email,
         )
+
+        if teacher_email:
+            User = get_user_model()
+            try:
+                user = User.objects.get(email=teacher_email)
+                subject.teacher = user
+                subject.save()
+                # Mock email sending
+                print(f"Assigned existing teacher {user.email} to {subject.name}")
+            except User.DoesNotExist:
+                import uuid
+
+                # Create invitation if not exists
+                Invitation.objects.get_or_create(
+                    email=teacher_email,
+                    defaults={
+                        "token": uuid.uuid4(),
+                        "role": User.Role.TEACHER,
+                    },
+                )
+                print(
+                    f"Created invitation for {teacher_email} to join as teacher for {subject.name}"
+                )
+
         messages.success(
             request, f"Subject '{subject_name}' added to '{student_class.name}'."
         )
