@@ -1,22 +1,29 @@
 import uuid
-from django.shortcuts import render, redirect, get_object_or_404
+
+from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.views.generic import CreateView, TemplateView
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
-from .models import Invitation, User
-from .forms import InviteTeacherForm, RegisterForm, TeacherSignUpForm, StudentSignUpForm
-from .decorators import admin_required
+from django.views.generic import CreateView, TemplateView
+
 from student.models import Enrollment
 from teacher.models import Class
 
+from .decorators import admin_required
+from .forms import InviteTeacherForm, RegisterForm, StudentSignUpForm, TeacherSignUpForm
+from .models import Invitation, User
+
+
 def logout_view(request):
     logout(request)
-    return redirect('login')
+    messages.success(request, "You have been logged out successfully.")
+    return redirect("login")
+
 
 @admin_required
 def invite_teacher(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         form = InviteTeacherForm(request.POST)
         if form.is_valid():
             invitation = form.save(commit=False)
@@ -24,15 +31,18 @@ def invite_teacher(request):
             invitation.role = User.Role.TEACHER
             invitation.save()
             # In a real app, send email here. For now, just show the link.
-            invite_link = request.build_absolute_uri(f'/register/{invitation.token}/')
-            return render(request, 'users/invite_success.html', {'invite_link': invite_link})
+            invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
+            return render(
+                request, "users/invite_success.html", {"invite_link": invite_link}
+            )
     else:
         form = InviteTeacherForm()
-    return render(request, 'users/invite_teacher.html', {'form': form})
+    return render(request, "users/invite_teacher.html", {"form": form})
+
 
 def register(request, token):
     invitation = get_object_or_404(Invitation, token=token, is_used=False)
-    if request.method == 'POST':
+    if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
@@ -41,78 +51,88 @@ def register(request, token):
             user.save()
             invitation.is_used = True
             invitation.save()
-            
+
             # Handle Enrollment if class_id is present
             if invitation.class_id:
                 try:
                     class_obj = Class.objects.get(id=invitation.class_id)
                     Enrollment.objects.create(student=user, class_obj=class_obj)
                 except Class.DoesNotExist:
-                    pass # Should not happen ideally
-            
+                    pass  # Should not happen ideally
+
             login(request, user)
+            messages.success(
+                request, f"Welcome {user.email}! You have successfully registered."
+            )
             if user.is_teacher():
-                return redirect('teacher_dashboard')
+                return redirect("teacher_dashboard")
             elif user.is_student():
-                return redirect('student_dashboard')
+                return redirect("student_dashboard")
             elif user.is_admin():
-                return redirect('superuser_dashboard')
-            return redirect('dashboard') # Fallback
+                return redirect("superuser_dashboard")
+            return redirect("dashboard")  # Fallback
     else:
-        form = RegisterForm(initial={'email': invitation.email})
-    return render(request, 'users/register.html', {'form': form})
+        form = RegisterForm(initial={"email": invitation.email})
+    return render(request, "users/register.html", {"form": form})
+
 
 @admin_required
 def superuser_dashboard(request):
     teachers = User.objects.filter(role=User.Role.TEACHER)
     students = User.objects.filter(role=User.Role.STUDENT)
     classes = Class.objects.all()
-    return render(request, 'users/dashboard.html', {
-        'teachers': teachers,
-        'students': students,
-        'classes': classes
-    })
+    return render(
+        request,
+        "users/dashboard.html",
+        {"teachers": teachers, "students": students, "classes": classes},
+    )
+
 
 def landing_page(request):
     if request.user.is_authenticated:
-        return redirect('role_based_redirect')
-    return render(request, 'users/landing.html')
+        return redirect("role_based_redirect")
+    return render(request, "users/landing.html")
+
 
 class TeacherSignUpView(CreateView):
     model = User
     form_class = TeacherSignUpForm
-    template_name = 'users/register.html'
-    
+    template_name = "users/register.html"
+
     def get_context_data(self, **kwargs):
-        kwargs['user_type'] = 'Teacher'
+        kwargs["user_type"] = "Teacher"
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
         user = form.save()
         login(self.request, user)
-        return redirect('teacher_dashboard')
+        messages.success(self.request, "Teacher account created successfully!")
+        return redirect("teacher_dashboard")
+
 
 class StudentSignUpView(CreateView):
     model = User
     form_class = StudentSignUpForm
-    template_name = 'users/register.html'
-    
+    template_name = "users/register.html"
+
     def get_context_data(self, **kwargs):
-        kwargs['user_type'] = 'Student'
+        kwargs["user_type"] = "Student"
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
         user = form.save()
         login(self.request, user)
-        return redirect('student_dashboard')
+        messages.success(self.request, "Student account created successfully!")
+        return redirect("student_dashboard")
+
 
 @login_required
 def role_based_redirect(request):
     user = request.user
     if user.is_teacher():
-        return redirect('teacher_dashboard')
+        return redirect("teacher_dashboard")
     elif user.is_student():
-        return redirect('student_dashboard')
+        return redirect("student_dashboard")
     elif user.is_admin():
-        return redirect('superuser_dashboard')
-    return redirect('landing')
+        return redirect("superuser_dashboard")
+    return redirect("landing")
