@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<script>
+    <script>
     function confirmDelete(formId, itemName) {
         if (confirm(`Are you sure you want to remove the ${itemName}?`)) {
             if (confirm(`Are you REALLY sure? This will remove the ${itemName} from active views.`)) {
@@ -10,6 +10,19 @@
             }
         }
     }
+
+    function toggleDay(btn, deptId) {
+        btn.classList.toggle('bg-blue-500');
+        btn.classList.toggle('text-white');
+        btn.classList.toggle('border-blue-500');
+        
+        // Update hidden input
+        const container = btn.parentElement;
+        const selectedBtns = container.querySelectorAll('.bg-blue-500');
+        const days = Array.from(selectedBtns).map(b => b.dataset.day).join(',');
+        document.getElementById('days-input-' + deptId).value = days;
+    }
+</script>
 </script>
 <div class="max-w-6xl mx-auto">
     <!-- ... header ... -->
@@ -59,11 +72,14 @@
                                 <form action="{% url 'add_class' %}" method="POST" class="flex gap-2">
                                     {% csrf_token %}
                                     <input type="hidden" name="department_id" value="{{ dept.id }}">
-                                    <input type="text" name="name" placeholder="Class Name" required 
-                                        class="px-2 py-1 border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-green-500">
-                                    <button type="submit" class="px-2 py-1 bg-green-600 text-white rounded-md text-xs hover:bg-green-700">
-                                        + Class
-                                    </button>
+                                    
+                                    <div class="flex flex-col gap-2">
+                                        <input type="text" name="name" placeholder="Class Name (Auto)" 
+                                            class="px-2 py-1 border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-green-500 w-32">
+                                        <button type="submit" class="px-2 py-1 bg-green-600 text-white rounded-md text-xs hover:bg-green-700 self-start">
+                                            + Class
+                                        </button>
+                                    </div>
                                 </form>
                                 {% endif %}
 
@@ -143,14 +159,44 @@
 
                                     <!-- Add Subject Form -->
                                     {% if cls.is_active %}
-                                    <form action="{% url 'add_subject' %}" method="POST" class="flex items-center gap-1">
+                                    <form action="{% url 'add_subject' %}" method="POST" class="flex flex-col gap-1 border-l-2 pl-2 border-gray-200 ml-4">
                                         {% csrf_token %}
                                         <input type="hidden" name="class_id" value="{{ cls.id }}">
-                                        <input type="text" name="name" placeholder="Subject" required 
-                                            class="w-24 px-2 py-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-400">
-                                        <button type="submit" class="p-1 text-gray-500 hover:text-blue-600 text-lg leading-none" title="Add Subject">
-                                            +
-                                        </button>
+                                        <div class="flex items-center gap-1">
+                                            <input type="text" name="name" placeholder="Subject" required 
+                                                class="w-24 px-2 py-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-400">
+                                            <button type="submit" class="p-1 text-gray-500 hover:text-blue-600 text-lg leading-none" title="Add Subject">
+                                                +
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Days Selector (Subject Level) -->
+                                        <div class="flex gap-1">
+                                            <input type="hidden" name="days" id="days-input-subj-{{ cls.id }}">
+                                            <button type="button" onclick="toggleDay(this, 'subj-{{ cls.id }}')" data-day="Mon" class="w-5 h-5 rounded-full border text-[8px] flex items-center justify-center hover:bg-gray-100 transition">M</button>
+                                            <button type="button" onclick="toggleDay(this, 'subj-{{ cls.id }}')" data-day="Tue" class="w-5 h-5 rounded-full border text-[8px] flex items-center justify-center hover:bg-gray-100 transition">T</button>
+                                            <button type="button" onclick="toggleDay(this, 'subj-{{ cls.id }}')" data-day="Wed" class="w-5 h-5 rounded-full border text-[8px] flex items-center justify-center hover:bg-gray-100 transition">W</button>
+                                            <button type="button" onclick="toggleDay(this, 'subj-{{ cls.id }}')" data-day="Thu" class="w-5 h-5 rounded-full border text-[8px] flex items-center justify-center hover:bg-gray-100 transition">T</button>
+                                            <button type="button" onclick="toggleDay(this, 'subj-{{ cls.id }}')" data-day="Fri" class="w-5 h-5 rounded-full border text-[8px] flex items-center justify-center hover:bg-gray-100 transition">F</button>
+                                            <button type="button" onclick="toggleDay(this, 'subj-{{ cls.id }}')" data-day="Sat" class="w-5 h-5 rounded-full border text-[8px] flex items-center justify-center hover:bg-gray-100 transition">S</button>
+                                            <button type="button" disabled class="w-5 h-5 rounded-full bg-red-100 text-red-500 border border-red-200 text-[8px] flex items-center justify-center cursor-not-allowed" title="Holiday">S</button>
+                                        </div>
+
+                                        <!-- Timing Selector (Subject Level) -->
+                                        <select name="timing" class="px-1 py-0.5 border rounded text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-400 w-24">
+                                            <option value="">Time</option>
+                                            <option value="07:00">07:00 AM</option>
+                                            <option value="08:00">08:00 AM</option>
+                                            <option value="09:00">09:00 AM</option>
+                                            <option value="10:00">10:00 AM</option>
+                                            <option value="11:00">11:00 AM</option>
+                                            <option value="12:00">12:00 PM</option>
+                                            <option value="13:00">01:00 PM</option>
+                                            <option value="14:00">02:00 PM</option>
+                                            <option value="15:00">03:00 PM</option>
+                                            <option value="16:00">04:00 PM</option>
+                                            <option value="17:00">05:00 PM</option>
+                                        </select>
                                     </form>
                                     {% endif %}
                                 </div>

@@ -98,9 +98,14 @@ def add_subject(request):
     if request.method == "POST":
         subject_name = request.POST.get("name")
         class_id = request.POST.get("class_id")
+        days_str = request.POST.get("days")
+        days = days_str.split(",") if days_str else []
+        timing = request.POST.get("timing")
 
         student_class = get_object_or_404(StudentClass, id=class_id)
-        Subject.objects.create(name=subject_name, student_class=student_class)
+        Subject.objects.create(
+            name=subject_name, student_class=student_class, days=days, timing=timing
+        )
         messages.success(
             request, f"Subject '{subject_name}' added to '{student_class.name}'."
         )
