@@ -100,6 +100,9 @@ class Department(models.Model):
     is_dead = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ("name", "session")
+
     def __str__(self):
         return f"{self.name} ({self.session})"
 
@@ -120,6 +123,9 @@ class StudentClass(
     is_dead = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ("name", "department")
+
     def __str__(self):
         return f"{self.name} - {self.department.name}"
 
@@ -137,6 +143,9 @@ class Subject(models.Model):
     is_active = models.BooleanField(default=True)
     is_dead = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("name", "student_class")
 
     def __str__(self):
         return f"{self.name} ({self.student_class.name})"
