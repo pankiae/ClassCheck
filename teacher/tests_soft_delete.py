@@ -53,3 +53,25 @@ class SoftDeleteTest(TestCase):
         response = self.client.get("/teacher/structure/")
         self.assertContains(response, "Subj 1")
         self.assertNotContains(response, "Dead Subject")
+
+    def test_mark_as_dead(self):
+        # 1. Mark Dept as Dead
+        self.client.post(
+            f"/teacher/structure/department/{self.dept.id}/delete/", {"dead": "true"}
+        )
+        self.dept.refresh_from_db()
+        self.assertTrue(self.dept.is_dead)
+
+        # 2. Mark Class as Dead
+        self.client.post(
+            f"/teacher/structure/class/{self.cls.id}/delete/", {"dead": "true"}
+        )
+        self.cls.refresh_from_db()
+        self.assertTrue(self.cls.is_dead)
+
+        # 3. Mark Subject as Dead
+        self.client.post(
+            f"/teacher/structure/subject/{self.subj.id}/delete/", {"dead": "true"}
+        )
+        self.subj.refresh_from_db()
+        self.assertTrue(self.subj.is_dead)

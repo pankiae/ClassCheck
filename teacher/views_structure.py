@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -115,6 +115,10 @@ def delete_department(request, dept_id):
         dept.is_active = True
         dept.save()
         messages.success(request, f"Department '{dept.name}' restored.")
+    elif "dead" in request.POST:
+        dept.is_dead = True
+        dept.save()
+        messages.success(request, f"Department '{dept.name}' marked as dead.")
     else:
         dept.is_active = False
         dept.save()
@@ -129,6 +133,10 @@ def delete_class(request, class_id):
         student_class.is_active = True
         student_class.save()
         messages.success(request, f"Class '{student_class.name}' restored.")
+    elif "dead" in request.POST:
+        student_class.is_dead = True
+        student_class.save()
+        messages.success(request, f"Class '{student_class.name}' marked as dead.")
     else:
         student_class.is_active = False
         student_class.save()
@@ -143,6 +151,10 @@ def delete_subject(request, subject_id):
         subject.is_active = True
         subject.save()
         messages.success(request, f"Subject '{subject.name}' restored.")
+    elif "dead" in request.POST:
+        subject.is_dead = True
+        subject.save()
+        messages.success(request, f"Subject '{subject.name}' marked as dead.")
     else:
         subject.is_active = False
         subject.save()

@@ -68,19 +68,32 @@
                                 {% endif %}
 
                                 <!-- Delete/Restore Department -->
-                                <form id="delete-dept-{{ dept.id }}" action="{% url 'delete_department' dept.id %}" method="POST">
-                                    {% csrf_token %}
-                                    {% if dept.is_active %}
-                                    <button type="button" onclick="confirmDelete('delete-dept-{{ dept.id }}', 'Department')" 
-                                        class="text-red-500 hover:text-red-700 font-bold px-2">
+                                <div class="flex items-center gap-1">
+                                    <form id="delete-dept-{{ dept.id }}" action="{% url 'delete_department' dept.id %}" method="POST">
+                                        {% csrf_token %}
+                                        {% if dept.is_active %}
+                                        <button type="button" onclick="confirmDelete('delete-dept-{{ dept.id }}', 'Department')" 
+                                            class="text-red-500 hover:text-red-700 font-bold px-2">
+                                            &times;
+                                        </button>
+                                        {% else %}
+                                        <button type="submit" name="restore" value="true" class="text-green-600 hover:text-green-800 text-xs font-semibold">
+                                            Restore
+                                        </button>
+                                        {% endif %}
+                                    </form>
+                                    
+                                    {% if not dept.is_active %}
+                                    <form id="dead-dept-{{ dept.id }}" action="{% url 'delete_department' dept.id %}" method="POST" style="display:none;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="dead" value="true">
+                                    </form>
+                                    <button type="button" onclick="confirmDelete('dead-dept-{{ dept.id }}', 'Department (DEAD)')" 
+                                            class="text-gray-400 hover:text-gray-600 font-bold px-2 text-xs" title="Mark as Dead">
                                         &times;
                                     </button>
-                                    {% else %}
-                                    <button type="submit" name="restore" value="true" class="text-green-600 hover:text-green-800 text-xs font-semibold">
-                                        Restore
-                                    </button>
                                     {% endif %}
-                                </form>
+                                </div>
                             </div>
                         </div>
 
@@ -115,6 +128,14 @@
                                             <form action="{% url 'delete_subject' subject.id %}" method="POST" class="inline ml-1">
                                                 {% csrf_token %}
                                                 <button type="submit" name="restore" value="true" class="text-green-600 hover:text-green-800 text-[10px]">Restore</button>
+                                                <button type="button" onclick="confirmDelete('delete-subj-inactive-{{ subject.id }}', 'Subject (DEAD)')" 
+                                                    class="text-gray-400 hover:text-gray-600 font-bold text-[10px] ml-1" title="Mark as Dead">
+                                                    &times;
+                                                </button>
+                                            </form>
+                                            <form id="delete-subj-inactive-{{ subject.id }}" action="{% url 'delete_subject' subject.id %}" method="POST" style="display:none;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="dead" value="true">
                                             </form>
                                         </div>
                                         {% endif %}
@@ -135,19 +156,32 @@
                                 </div>
                                 
                                 <!-- Delete/Restore Class -->
-                                <form id="delete-class-{{ cls.id }}" action="{% url 'delete_class' cls.id %}" method="POST" class="ml-auto">
-                                    {% csrf_token %}
-                                    {% if cls.is_active %}
-                                        <button type="button" onclick="confirmDelete('delete-class-{{ cls.id }}', 'Class')" 
-                                            class="text-red-500 hover:text-red-700 font-bold px-2">
-                                            &times;
-                                        </button>
-                                    {% else %}
-                                        <button type="submit" name="restore" value="true" class="text-green-600 hover:text-green-800 text-xs font-semibold">
-                                            Restore
-                                        </button>
+                                <div class="ml-auto flex items-center gap-1">
+                                    <form id="delete-class-{{ cls.id }}" action="{% url 'delete_class' cls.id %}" method="POST">
+                                        {% csrf_token %}
+                                        {% if cls.is_active %}
+                                            <button type="button" onclick="confirmDelete('delete-class-{{ cls.id }}', 'Class')" 
+                                                class="text-red-500 hover:text-red-700 font-bold px-2">
+                                                &times;
+                                            </button>
+                                        {% else %}
+                                            <button type="submit" name="restore" value="true" class="text-green-600 hover:text-green-800 text-xs font-semibold">
+                                                Restore
+                                            </button>
+                                        {% endif %}
+                                    </form>
+
+                                    {% if not cls.is_active %}
+                                    <form id="dead-class-{{ cls.id }}" action="{% url 'delete_class' cls.id %}" method="POST" style="display:none;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="dead" value="true">
+                                    </form>
+                                    <button type="button" onclick="confirmDelete('dead-class-{{ cls.id }}', 'Class (DEAD)')" 
+                                            class="text-gray-400 hover:text-gray-600 font-bold px-2 text-xs" title="Mark as Dead">
+                                        &times;
+                                    </button>
                                     {% endif %}
-                                </form>
+                                </div>
                             </div>
                             {% empty %}
                             <p class="text-sm text-gray-400 italic">No classes yet.</p>
