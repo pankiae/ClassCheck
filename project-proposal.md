@@ -52,3 +52,26 @@ Focus on the User Interface and User Experience.
     - in case the previous class was not done then the whole column will be empty or blurred grey  color.
     
     - Student can see the whole classes schedule for that day. Also the other lecture details too. Details like if the previous lecture was marked as present or not. If yes then the student is present or not in that lecture.
+
+
+session [2025-2026]
+    department-1 [Admin will provide the department name]
+        class-1 [admin will provide the class name]
+            subject-1 [admin will provide the subject name]
+            subject-2 [admin will provide the subject name]
+            subject-3 [admin will provide the subject name]
+        class-2 [admin will provide the class name]
+            subject-1 [admin will provide the subject name]
+            subject-2 [admin will provide the subject name]
+            subject-3 [admin will provide the subject name]
+    department-2 [Admin will provide the department name]
+        class-1 [admin will provide the class name]
+            subject-1 [admin will provide the subject name]
+            subject-2 [admin will provide the subject name]
+            subject-3 [admin will provide the subject name]
+        class-2 [admin will provide the class name]
+            subject-1 [admin will provide the subject name]
+            subject-2 [admin will provide the subject name]
+            subject-3 [admin will provide the subject name]
+    
+            
