@@ -157,14 +157,23 @@ def delete_department(request, dept_id):
         dept.is_active = True
         dept.save()
         messages.success(request, f"Department '{dept.name}' restored.")
-    elif "dead" in request.POST:
-        dept.is_dead = True
-        dept.save()
-        messages.success(request, f"Department '{dept.name}' marked as dead.")
+    elif "hard_delete" in request.POST:
+        dept_name = dept.name
+        dept.delete()
+        messages.success(request, f"Department '{dept_name}' permanently deleted.")
     else:
         dept.is_active = False
         dept.save()
-        messages.warning(request, f"Department '{dept.name}' deactivated.")
+        # Cascading deactivation
+        for student_class in dept.classes.all():
+            student_class.is_active = False
+            student_class.save()
+            for subject in student_class.subjects.all():
+                subject.is_active = False
+                subject.save()
+        messages.warning(
+            request, f"Department '{dept.name}' and its contents deactivated."
+        )
     return redirect("manage_structure")
 
 
@@ -175,14 +184,20 @@ def delete_class(request, class_id):
         student_class.is_active = True
         student_class.save()
         messages.success(request, f"Class '{student_class.name}' restored.")
-    elif "dead" in request.POST:
-        student_class.is_dead = True
-        student_class.save()
-        messages.success(request, f"Class '{student_class.name}' marked as dead.")
+    elif "hard_delete" in request.POST:
+        class_name = student_class.name
+        student_class.delete()
+        messages.success(request, f"Class '{class_name}' permanently deleted.")
     else:
         student_class.is_active = False
         student_class.save()
-        messages.warning(request, f"Class '{student_class.name}' deactivated.")
+        # Cascading deactivation
+        for subject in student_class.subjects.all():
+            subject.is_active = False
+            subject.save()
+        messages.warning(
+            request, f"Class '{student_class.name}' and its subjects deactivated."
+        )
     return redirect("manage_structure")
 
 
@@ -193,10 +208,10 @@ def delete_subject(request, subject_id):
         subject.is_active = True
         subject.save()
         messages.success(request, f"Subject '{subject.name}' restored.")
-    elif "dead" in request.POST:
-        subject.is_dead = True
-        subject.save()
-        messages.success(request, f"Subject '{subject.name}' marked as dead.")
+    elif "hard_delete" in request.POST:
+        subject_name = subject.name
+        subject.delete()
+        messages.success(request, f"Subject '{subject_name}' permanently deleted.")
     else:
         subject.is_active = False
         subject.save()
