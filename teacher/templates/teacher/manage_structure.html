@@ -211,9 +211,17 @@
                                 <div class="flex-grow flex flex-wrap gap-2 items-center border-l pl-4 border-gray-200">
                                     {% for subject in cls.subjects.all %}
                                         <div class="inline-flex items-center bg-blue-50 text-blue-800 rounded border border-blue-100 overflow-hidden group hover:border-blue-300 transition {% if not subject.is_active %}opacity-60 bg-gray-100 border-gray-200 text-gray-500{% endif %}">
-                                            <span class="px-2 py-1 text-xs {% if not subject.is_active %}line-through{% endif %}">
-                                                {{ subject.name }}
-                                            </span>
+                                            <div class="px-2 py-1 flex flex-col gap-1 {% if not subject.is_active %}line-through opacity-70{% endif %}">
+                                                <span class="text-xs font-bold leading-none">{{ subject.name }}</span>
+                                                <div class="text-[10px] leading-none opacity-90 flex gap-1">
+                                                    <span>{{ subject.days|join:"," }}</span>
+                                                    <span>&bull;</span>
+                                                    <span>{{ subject.timing|time:"h:i A" }}</span>
+                                                </div>
+                                                <span class="text-[9px] leading-none opacity-80 text-gray-600 truncate max-w-[120px]" title="{{ subject.teacher_email }}">
+                                                    {{ subject.teacher_email|default:"No Teacher" }}
+                                                </span>
+                                            </div>
                                             
                                             {% if subject.is_active %}
                                             <form id="delete-subj-{{ subject.id }}" action="{% url 'delete_subject' subject.id %}" method="POST" class="border-l border-blue-200">
