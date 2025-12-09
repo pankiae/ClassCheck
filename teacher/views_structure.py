@@ -115,6 +115,21 @@ def add_subject(request):
             messages.error(request, "Teacher email is required.")
             return redirect("manage_structure")
 
+        # Conflict Detection
+        conflicting_subjects = Subject.objects.filter(
+            teacher_email=teacher_email, timing=timing, is_active=True, is_dead=False
+        )
+
+        for subj in conflicting_subjects:
+            # Check for intersection in days
+            # days is a list like ['Mon', 'Wed']
+            if any(day in subj.days for day in days):
+                messages.error(
+                    request,
+                    f"Conflict: Teacher is already assigned to '{subj.name}' ({subj.student_class.name}) at {timing} on overlapping days.",
+                )
+                return redirect("manage_structure")
+
         student_class = get_object_or_404(StudentClass, id=class_id)
         subject = Subject.objects.create(
             name=subject_name,
