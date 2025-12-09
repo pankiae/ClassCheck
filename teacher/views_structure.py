@@ -111,6 +111,10 @@ def add_subject(request):
         timing = request.POST.get("timing")
         teacher_email = request.POST.get("teacher_email")
 
+        if not teacher_email:
+            messages.error(request, "Teacher email is required.")
+            return redirect("manage_structure")
+
         student_class = get_object_or_404(StudentClass, id=class_id)
         subject = Subject.objects.create(
             name=subject_name,
@@ -120,28 +124,27 @@ def add_subject(request):
             teacher_email=teacher_email,
         )
 
-        if teacher_email:
-            User = get_user_model()
-            try:
-                user = User.objects.get(email=teacher_email)
-                subject.teacher = user
-                subject.save()
-                # Mock email sending
-                print(f"Assigned existing teacher {user.email} to {subject.name}")
-            except User.DoesNotExist:
-                import uuid
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=teacher_email)
+            subject.teacher = user
+            subject.save()
+            # Mock email sending
+            print(f"Assigned existing teacher {user.email} to {subject.name}")
+        except User.DoesNotExist:
+            import uuid
 
-                # Create invitation if not exists
-                Invitation.objects.get_or_create(
-                    email=teacher_email,
-                    defaults={
-                        "token": uuid.uuid4(),
-                        "role": User.Role.TEACHER,
-                    },
-                )
-                print(
-                    f"Created invitation for {teacher_email} to join as teacher for {subject.name}"
-                )
+            # Create invitation if not exists
+            Invitation.objects.get_or_create(
+                email=teacher_email,
+                defaults={
+                    "token": uuid.uuid4(),
+                    "role": User.Role.TEACHER,
+                },
+            )
+            print(
+                f"Created invitation for {teacher_email} to join as teacher for {subject.name}"
+            )
 
         messages.success(
             request, f"Subject '{subject_name}' added to '{student_class.name}'."
