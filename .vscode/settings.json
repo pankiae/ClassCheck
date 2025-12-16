@@ -1,0 +1,18 @@
+{
+    "editor.formatOnSave": true,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    },
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[django-html]": {
+        "editor.defaultFormatter": "monosans.djlint"
+    },
+    "files.associations": {
+        "**/templates/**/*.html": "django-html",
+        "**/templates/**/*": "django-html",
+        "**/*.html": "django-html"
+    },
+    "python.formatting.provider": "none"
+}

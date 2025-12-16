@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load teacher_extras %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-8 rounded shadow-md">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">My Schedule</h2>
+        <div class="text-gray-600">
+            Date: {{ date }}
+        </div>
+    </div>
+
+    {% if sessions %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for session in sessions %}
+        <div class="bg-white border rounded shadow p-6 
+            {% if attendance_map|get_item:session.id == 'Present' %}border-green-500 bg-green-50
+            {% elif attendance_map|get_item:session.id == 'Absent' %}border-red-500 bg-red-50
+            {% else %}border-gray-300 bg-gray-50{% endif %}">
+
+            <h3 class="text-xl font-bold mb-2">{{ session.class_obj.subject }}</h3>
+            <p class="text-gray-600 mb-2">{{ session.schedule.start_time }} - {{ session.schedule.end_time }}</p>
+            <p class="font-semibold">
+                Status:
+                <span class="
+                    {% if attendance_map|get_item:session.id == 'Present' %}text-green-600
+                    {% elif attendance_map|get_item:session.id == 'Absent' %}text-red-600
+                    {% else %}text-gray-500{% endif %}">
+                    {{ attendance_map|get_item:session.id }}
+                </span>
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No classes scheduled for today.</p>
+    {% endif %}
+</div>
+{% endblock %}
