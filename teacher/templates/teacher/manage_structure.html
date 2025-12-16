@@ -85,67 +85,69 @@
             document.getElementById('days-input-' + deptId).value = days;
         }
     </script>
-<div class="max-w-6xl mx-auto">
+<div class="w-full px-8 py-6">
     <!-- ... header ... -->
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Academic Structure</h1>
+    <div class="flex justify-between items-center mb-10 border-b pb-4">
+        <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Academic Structure</h1>
     </div>
 
-    <div class="space-y-6">
+    <div class="space-y-16">
         {% for session in sessions %}
-        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+        <div class="border-t border-gray-200 pt-8 mt-8 first:border-0 first:mt-0 first:pt-0">
             <!-- Session Header -->
-            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-gray-700">
-                    Session: {{ session.year_range }}
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 flex items-center gap-4">
+                    <span>{{ session.year_range }}</span>
                     {% if session.is_active %}
-                    <span class="ml-2 px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">Active</span>
+                    <span class="px-3 py-1 text-sm font-medium text-green-700 bg-green-100 rounded-full tracking-wide">Active</span>
                     {% endif %}
                 </h2>
                 
                 <!-- Add Department Form -->
-                <form action="{% url 'add_department' %}" method="POST" class="flex gap-2">
+                <form action="{% url 'add_department' %}" method="POST" class="flex gap-3 items-center">
                     {% csrf_token %}
                     <input type="hidden" name="session_id" value="{{ session.id }}">
-                    <input type="text" name="name" placeholder="Department Name" required 
-                        class="px-3 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
+                    <input type="text" name="name" placeholder="New Department Name" required 
+                        class="px-4 py-2 border-b-2 border-gray-300 focus:border-blue-600 focus:outline-none bg-transparent text-gray-700 placeholder-gray-400 transition-colors w-64">
+                    <button type="submit" class="px-5 py-2 bg-gray-900 text-white rounded hover:bg-black transition font-medium">
                         + Dept
                     </button>
                 </form>
             </div>
 
             <!-- Departments List -->
-            <div class="p-6">
+            <div class="space-y-12">
                 {% if session.departments.all %}
-                <div class="space-y-4">
                     {% for dept in session.departments.all %}
-                    <div class="border rounded-md p-4 bg-white relative {% if not dept.is_active %}opacity-50 grayscale{% endif %}">
-                        <div class="flex justify-between items-center mb-3 border-b pb-2">
-                            <div class="flex items-center gap-3">
-                                <h3 class="font-bold text-lg text-gray-800">
+                    <div class="group relative">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                            <div class="flex items-center gap-4">
+                                <h3 class="text-2xl font-bold text-gray-800">
                                     {{ dept.name }} 
-                                    {% if not dept.is_active %}(Inactive){% endif %}
+                                    {% if not dept.is_active %}
+                                        <span class="text-red-500 text-sm font-normal">(Inactive)</span>
+                                    {% endif %}
                                 </h3>
+                                
                                 <!-- Delete/Restore Department -->
-                                <div class="flex items-center">
+                                <div class="opacity-0 group-hover:opacity-100 transition-opacity">
                                     <form id="delete-dept-{{ dept.id }}" action="{% url 'delete_department' dept.id %}" method="POST">
                                         {% csrf_token %}
                                         {% if dept.is_active %}
                                         <button type="button" onclick="openDeleteModal('delete-dept-{{ dept.id }}', 'Department', false)" 
-                                            class="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition" title="Delete Department">
+                                            class="text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition" title="Delete Department">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                             </svg>
                                         </button>
                                         {% else %}
-                                        <div class="flex gap-1 items-center">
-                                            <button type="submit" name="restore" value="true" class="text-green-600 hover:text-green-800 text-xs font-semibold px-2 py-1 border border-green-200 rounded hover:bg-green-50">
+                                        <div class="flex gap-2 items-center">
+                                            <button type="submit" name="restore" value="true" class="text-green-600 hover:text-green-800 text-xs font-bold uppercase tracking-wider px-2 py-1 border border-green-200 rounded hover:bg-green-50">
                                                 Restore
                                             </button>
                                             <button type="button" onclick="openDeleteModal('delete-dept-{{ dept.id }}', 'Department', true)" 
-                                                class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50" title="Permanently Delete">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                class="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50" title="Permanently Delete">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
                                             </button>
@@ -155,172 +157,182 @@
                                 </div>
                             </div>
                             
-                            <div class="flex gap-2 items-center">
+                            <div class="mt-2 md:mt-0">
                                 <!-- Add Class Form -->
                                 {% if dept.is_active %}
-                                <form action="{% url 'add_class' %}" method="POST" class="flex gap-2">
+                                <form action="{% url 'add_class' %}" method="POST" class="flex items-center gap-2">
                                     {% csrf_token %}
                                     <input type="hidden" name="department_id" value="{{ dept.id }}">
                                     
-                                    <div class="flex flex-col gap-2">
-                                        <input type="text" name="name" placeholder="Class Name (Auto)" 
-                                            class="px-2 py-1 border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-green-500 w-32">
-                                        <button type="submit" class="px-2 py-1 bg-green-600 text-white rounded-md text-xs hover:bg-green-700 self-start">
-                                            + Class
-                                        </button>
-                                    </div>
+                                    <input type="text" name="name" placeholder="Class Name" 
+                                        class="px-3 py-1.5 border-b border-gray-300 focus:border-green-500 focus:outline-none bg-transparent text-sm w-40">
+                                    <button type="submit" class="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded text-sm hover:bg-green-100 font-medium transition">
+                                        + Class
+                                    </button>
                                 </form>
                                 {% endif %}
                             </div>
                         </div>
 
                         <!-- Classes List -->
-                        <div class="ml-4 space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                             {% for cls in dept.classes.all %}
-                            <div class="flex items-center gap-4 p-2 bg-gray-50 rounded hover:bg-gray-100 transition {% if not cls.is_active %}opacity-50{% endif %}">
-                                <div class="flex items-center gap-2 min-w-[150px]">
-                                    <span class="font-semibold text-gray-700">
-                                        {{ cls.name }}
-                                    </span>
-                                    <!-- Delete/Restore Class -->
-                                    <form id="delete-class-{{ cls.id }}" action="{% url 'delete_class' cls.id %}" method="POST">
-                                        {% csrf_token %}
-                                        {% if cls.is_active %}
-                                            <button type="button" onclick="openDeleteModal('delete-class-{{ cls.id }}', 'Class', false)" 
-                                                class="text-gray-400 hover:text-red-600 p-0.5 rounded hover:bg-red-50 transition" title="Delete Class">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
-                                        {% else %}
-                                            <div class="flex gap-1 items-center">
-                                                <button type="submit" name="restore" value="true" class="text-green-600 hover:text-green-800 text-[10px] font-semibold border border-green-200 px-1 rounded">
-                                                    Restore
-                                                </button>
-                                                <button type="button" onclick="openDeleteModal('delete-class-{{ cls.id }}', 'Class', true)" 
-                                                    class="text-red-500 hover:text-red-700 p-0.5" title="Permanently Delete">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div class="flex flex-col gap-3 p-4 rounded-lg border border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm transition-all {% if not cls.is_active %}opacity-50{% endif %}">
+                                <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-lg font-semibold text-gray-700">
+                                            {{ cls.name }}
+                                        </span>
+                                        <!-- Delete/Restore Class -->
+                                        <form id="delete-class-{{ cls.id }}" action="{% url 'delete_class' cls.id %}" method="POST">
+                                            {% csrf_token %}
+                                            {% if cls.is_active %}
+                                                <button type="button" onclick="openDeleteModal('delete-class-{{ cls.id }}', 'Class', false)" 
+                                                    class="text-gray-300 hover:text-red-500 p-1 transition" title="Delete Class">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                     </svg>
                                                 </button>
-                                            </div>
-                                        {% endif %}
-                                    </form>
+                                            {% else %}
+                                                <div class="flex gap-2 items-center">
+                                                    <button type="submit" name="restore" value="true" class="text-xs text-green-600 hover:underline">
+                                                        Restore
+                                                    </button>
+                                                    <button type="button" onclick="openDeleteModal('delete-class-{{ cls.id }}', 'Class', true)" 
+                                                        class="text-red-400 hover:text-red-600 p-1" title="Permanently Delete">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            {% endif %}
+                                        </form>
+                                    </div>
+
+                                    {% if cls.is_active %}
+                                    <div class="text-xs text-gray-400 font-mono">
+                                        {{ cls.subjects.count }} Subjects
+                                    </div>
+                                    {% endif %}
                                 </div>
                                 
-                                <div class="flex-grow flex flex-wrap gap-2 items-center border-l pl-4 border-gray-200">
+                                <div class="flex flex-wrap gap-3">
                                     {% for subject in cls.subjects.all %}
-                                        <div class="inline-flex items-center bg-blue-50 text-blue-800 rounded border border-blue-100 overflow-hidden group hover:border-blue-300 transition {% if not subject.is_active %}opacity-60 bg-gray-100 border-gray-200 text-gray-500{% endif %}">
-                                            <div class="px-2 py-1 flex flex-col gap-1 {% if not subject.is_active %}line-through opacity-70{% endif %}">
-                                                <span class="text-xs font-bold leading-none">{{ subject.name }}</span>
-                                                <div class="text-[10px] leading-none opacity-90 flex gap-1">
-                                                    <span>{{ subject.days|join:"," }}</span>
-                                                    <span>&bull;</span>
+                                        <div class="relative group/subj flex items-center bg-blue-50 text-blue-900 rounded-md px-3 py-2 border border-blue-100 hover:border-blue-300 transition {% if not subject.is_active %}opacity-60 bg-gray-100 border-gray-200 text-gray-500{% endif %}">
+                                            <div class="flex flex-col">
+                                                <span class="text-sm font-bold {% if not subject.is_active %}line-through opacity-70{% endif %}">{{ subject.name }}</span>
+                                                <div class="text-[10px] opacity-80 flex gap-2">
+                                                    <span>{{ subject.days|join:"/" }}</span>
                                                     <span>{{ subject.timing|time:"h:i A" }}</span>
                                                 </div>
-                                                <span class="text-[9px] leading-none opacity-80 text-gray-600 truncate max-w-[120px]" title="{{ subject.teacher_email }}">
-                                                    {{ subject.teacher_email|default:"No Teacher" }}
+                                                <span class="text-[10px] text-gray-500 truncate w-32" title="{{ subject.teacher_email }}">
+                                                    {{ subject.teacher_email|default:"Unassigned" }}
                                                 </span>
                                             </div>
                                             
-                                            {% if subject.is_active %}
-                                            <form id="delete-subj-{{ subject.id }}" action="{% url 'delete_subject' subject.id %}" method="POST" class="border-l border-blue-200">
-                                                {% csrf_token %}
-                                                <button type="button" onclick="openDeleteModal('delete-subj-{{ subject.id }}', 'Subject', false)" 
-                                                    class="px-1.5 py-1 text-blue-400 hover:text-red-600 hover:bg-red-50 transition" title="Delete Subject">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </form>
-                                            {% else %}
-                                            <div class="flex border-l border-gray-300">
-                                                <form action="{% url 'delete_subject' subject.id %}" method="POST">
+                                            <!-- Delete Subject Button (Hidden by default, shown on hover) -->
+                                            <div class="absolute -top-2 -right-2 opacity-0 group-hover/subj:opacity-100 transition-opacity bg-white border rounded-full shadow-sm">
+                                                {% if subject.is_active %}
+                                                <form id="delete-subj-{{ subject.id }}" action="{% url 'delete_subject' subject.id %}" method="POST">
                                                     {% csrf_token %}
-                                                    <button type="submit" name="restore" value="true" class="px-1 py-1 text-green-600 hover:bg-green-100 text-[10px]" title="Restore">
-                                                        &#8634;
+                                                    <button type="button" onclick="openDeleteModal('delete-subj-{{ subject.id }}', 'Subject', false)" 
+                                                        class="p-1 text-gray-400 hover:text-red-600 rounded-full" title="Delete Subject">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
                                                     </button>
                                                 </form>
-                                                <form id="delete-subj-inactive-{{ subject.id }}" action="{% url 'delete_subject' subject.id %}" method="POST">
-                                                    {% csrf_token %}
-                                                    <button type="button" onclick="openDeleteModal('delete-subj-inactive-{{ subject.id }}', 'Subject', true)" 
-                                                        class="px-1 py-1 text-red-400 hover:text-red-600 hover:bg-red-50" title="Permanently Delete">
-                                                        &times;
-                                                    </button>
-                                                </form>
+                                                {% else %}
+                                                <div class="flex">
+                                                    <form action="{% url 'delete_subject' subject.id %}" method="POST">
+                                                        {% csrf_token %}
+                                                        <button type="submit" name="restore" value="true" class="p-1 text-green-600 hover:bg-green-50 rounded-l-full" title="Restore">
+                                                            &#8634;
+                                                        </button>
+                                                    </form>
+                                                    <form id="delete-subj-inactive-{{ subject.id }}" action="{% url 'delete_subject' subject.id %}" method="POST">
+                                                        {% csrf_token %}
+                                                        <button type="button" onclick="openDeleteModal('delete-subj-inactive-{{ subject.id }}', 'Subject', true)" 
+                                                            class="p-1 text-red-400 hover:text-red-600 rounded-r-full" title="Permanently Delete">
+                                                            &times;
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                                {% endif %}
                                             </div>
-                                            {% endif %}
                                         </div>
                                     {% endfor %}
-
-                                    <!-- Add Subject Form -->
-                                    {% if cls.is_active %}
-                                    <form action="{% url 'add_subject' %}" method="POST" class="flex flex-col gap-1 ml-2">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="class_id" value="{{ cls.id }}">
-                                        <div class="flex items-center gap-1">
-                                            <input type="text" name="name" placeholder="Subject" required 
-                                                class="w-24 px-2 py-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-400">
-                                            <button type="submit" class="p-1 text-gray-500 hover:text-blue-600 text-lg leading-none" title="Add Subject">
-                                                +
-                                            </button>
-                                        </div>
-                                        <!-- Days and Timing Selectors -->
-                                        <div class="flex gap-1">
-                                            <input type="hidden" name="days" id="days-input-subj-{{ cls.id }}">
-                                            <button type="button" onclick="toggleDay(this, 'subj-{{ cls.id }}')" data-day="Mon" class="w-5 h-5 rounded-full border text-[8px] flex items-center justify-center hover:bg-gray-100 transition">M</button>
-                                            <button type="button" onclick="toggleDay(this, 'subj-{{ cls.id }}')" data-day="Tue" class="w-5 h-5 rounded-full border text-[8px] flex items-center justify-center hover:bg-gray-100 transition">T</button>
-                                            <button type="button" onclick="toggleDay(this, 'subj-{{ cls.id }}')" data-day="Wed" class="w-5 h-5 rounded-full border text-[8px] flex items-center justify-center hover:bg-gray-100 transition">W</button>
-                                            <button type="button" onclick="toggleDay(this, 'subj-{{ cls.id }}')" data-day="Thu" class="w-5 h-5 rounded-full border text-[8px] flex items-center justify-center hover:bg-gray-100 transition">T</button>
-                                            <button type="button" onclick="toggleDay(this, 'subj-{{ cls.id }}')" data-day="Fri" class="w-5 h-5 rounded-full border text-[8px] flex items-center justify-center hover:bg-gray-100 transition">F</button>
-                                            <button type="button" onclick="toggleDay(this, 'subj-{{ cls.id }}')" data-day="Sat" class="w-5 h-5 rounded-full border text-[8px] flex items-center justify-center hover:bg-gray-100 transition">S</button>
-                                            <button type="button" disabled class="w-5 h-5 rounded-full bg-red-100 text-red-500 border border-red-200 text-[8px] flex items-center justify-center cursor-not-allowed" title="Holiday">S</button>
-                                        </div>
-                                        <select name="timing" class="px-1 py-0.5 border rounded text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-400 w-24">
-                                            <option value="">Time</option>
-                                            <option value="07:00">07:00 AM</option>
-                                            <option value="08:00">08:00 AM</option>
-                                            <option value="09:00">09:00 AM</option>
-                                            <option value="10:00">10:00 AM</option>
-                                            <option value="11:00">11:00 AM</option>
-                                            <option value="12:00">12:00 PM</option>
-                                            <option value="13:00">01:00 PM</option>
-                                            <option value="14:00">02:00 PM</option>
-                                            <option value="15:00">03:00 PM</option>
-                                            <option value="16:00">04:00 PM</option>
-                                            <option value="17:00">05:00 PM</option>
-                                        </select>
-                                        <input type="email" name="teacher_email" placeholder="Teacher Email" required 
-                                            class="w-32 px-2 py-0.5 border rounded text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-400">
-                                    </form>
+                                    {% if cls.subjects.count == 0 %}
+                                        <span class="text-xs text-gray-400 italic py-2">No subjects added.</span>
                                     {% endif %}
                                 </div>
+                                
+                                {% if cls.is_active %}
+                                <!-- Add Subject Form -->
+                                <form action="{% url 'add_subject' %}" method="POST" class="mt-2 text-xs">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="class_id" value="{{ cls.id }}">
+                                    
+                                    <div class="space-y-2 p-2 bg-gray-50 rounded border border-gray-100">
+                                        <!-- Inputs Group -->
+                                        <div class="flex gap-2">
+                                            <input type="text" name="name" placeholder="New Subject" required
+                                                class="flex-1 px-2 py-1 border border-gray-300 rounded focus:border-blue-500 focus:outline-none">
+                                            <input type="text" name="timing" placeholder="HH:MM" 
+                                                class="w-16 px-2 py-1 border border-gray-300 rounded focus:border-blue-500 focus:outline-none">
+                                        </div>
+                                        
+                                        <input type="email" name="teacher_email" placeholder="Teacher Email (Required)" required
+                                            class="w-full px-2 py-1 border border-gray-300 rounded focus:border-blue-500 focus:outline-none">
+                                        
+                                        <!-- Days Selection -->
+                                        <div class="flex flex-wrap gap-2 pt-1 border-t border-gray-200">
+                                            {% for day_code, day_name in days_of_week %}
+                                            <label class="inline-flex items-center gap-1 cursor-pointer select-none">
+                                                <input type="checkbox" name="days" value="{{ day_code }}" class="text-blue-600 rounded focus:ring-0 w-3 h-3">
+                                                <span class="text-gray-600 hover:text-gray-900">{{ day_code }}</span>
+                                            </label>
+                                            {% endfor %}
+                                        </div>
+
+                                        <button type="submit" class="w-full py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 hover:text-gray-900 transition font-semibold shadow-sm">
+                                            Add Subject
+                                        </button>
+                                    </div>
+                                </form>
+                                {% endif %}
                             </div>
                             {% empty %}
-                            <p class="text-sm text-gray-400 italic">No classes yet.</p>
+                            <p class="text-gray-400 italic">No classes in this department.</p>
                             {% endfor %}
                         </div>
+
+                        <!-- Divider -->
+                        {% if not forloop.last %}
+                        <div class="border-b border-gray-100 my-8"></div>
+                        {% endif %}
                     </div>
                     {% endfor %}
-                </div>
                 {% else %}
-                <p class="text-gray-500 text-center py-4">No departments in this session. Add one above.</p>
+                <div class="text-center py-12">
+                    <p class="text-xl text-gray-400 font-light">This session is empty.</p>
+                    <p class="text-gray-500 mt-2">Create a department to get started.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
         {% empty %}
-        <!-- Empty State with Option to Init -->
-        <div class="text-center py-10 bg-white rounded-lg shadow">
-            <h2 class="text-xl font-bold text-gray-700 mb-2">No Academic Sessions Found</h2>
-            <p class="text-gray-500 mb-6">Start by adding a department to the current session ({{ default_session_name }}).</p>
+        <!-- Empty State -->
+        <div class="text-center py-20">
+            <h2 class="text-3xl font-bold text-gray-300 mb-4">No Data Found</h2>
+            <p class="text-gray-500 mb-8">Get started by creating your first academic session and department.</p>
             
-            <form action="{% url 'add_department' %}" method="POST" class="inline-flex gap-2">
+            <form action="{% url 'add_department' %}" method="POST" class="inline-flex gap-0 shadow-lg rounded-lg overflow-hidden">
                 {% csrf_token %}
-                <!-- No session_id means auto-create -->
                 <input type="text" name="name" placeholder="Department Name" required 
-                    class="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium">
-                    Create Department
+                    class="px-6 py-3 bg-white border-none focus:outline-none w-64">
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white font-bold hover:bg-blue-700 transition">
+                    Start Here
                 </button>
             </form>
         </div>

@@ -39,7 +39,21 @@ def manage_structure(request):
     next_year = current_year + 1
     default_session_name = f"{current_year}-{next_year}"
 
-    context = {"sessions": sessions, "default_session_name": default_session_name}
+    days_of_week = [
+        ("Mon", "Monday"),
+        ("Tue", "Tuesday"),
+        ("Wed", "Wednesday"),
+        ("Thu", "Thursday"),
+        ("Fri", "Friday"),
+        ("Sat", "Saturday"),
+        ("Sun", "Sunday"),
+    ]
+
+    context = {
+        "sessions": sessions,
+        "default_session_name": default_session_name,
+        "days_of_week": days_of_week,
+    }
     return render(request, "teacher/manage_structure.html", context)
 
 
