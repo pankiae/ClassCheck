@@ -13,7 +13,7 @@ from student.models import Enrollment
 from teacher.models import Class
 
 from .decorators import admin_required
-from .forms import InviteStudentForm, InviteTeacherForm, RegisterForm, StudentSignUpForm, TeacherSignUpForm
+from .forms import InviteStudentForm, InviteTeacherForm, RegisterForm
 from .models import Invitation, User
 
 
@@ -154,36 +154,6 @@ def landing_page(request):
     return render(request, "users/landing.html")
 
 
-class TeacherSignUpView(CreateView):
-    model = User
-    form_class = TeacherSignUpForm
-    template_name = "users/register.html"
-
-    def get_context_data(self, **kwargs):
-        kwargs["user_type"] = "Teacher"
-        return super().get_context_data(**kwargs)
-
-    def form_valid(self, form):
-        user = form.save()
-        login(self.request, user)
-        messages.success(self.request, "Teacher account created successfully!")
-        return redirect("teacher_dashboard")
-
-
-class StudentSignUpView(CreateView):
-    model = User
-    form_class = StudentSignUpForm
-    template_name = "users/register.html"
-
-    def get_context_data(self, **kwargs):
-        kwargs["user_type"] = "Student"
-        return super().get_context_data(**kwargs)
-
-    def form_valid(self, form):
-        user = form.save()
-        login(self.request, user)
-        messages.success(self.request, "Student account created successfully!")
-        return redirect("student_dashboard")
 
 
 @login_required
