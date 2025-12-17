@@ -44,6 +44,22 @@ def invite_student(request, class_id):
                         role=User.Role.STUDENT,
                         class_id=subject.id
                     )
+                    
+                    invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
+                    # Send email
+                    from django.conf import settings
+                    from django.core.mail import send_mail
+                    
+                    subject_email = f"Invitation to join {subject.name}"
+                    message = f"Hi,\n\nYou have been invited to join the class '{subject.name}' on ClassCheck. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
+
+                    send_mail(
+                        subject_email,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=False,
+                    )
                     invitation.save()
                     success_count += 1
                 except Exception as e:
