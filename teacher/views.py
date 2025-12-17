@@ -9,19 +9,19 @@ from users.decorators import teacher_required
 from users.models import User
 
 from .forms_invite import InviteStudentForm
-from .models import Attendance, Class, ClassSchedule, ClassSession
+from .models import Attendance, Class, ClassSchedule, ClassSession, Subject
 
 
 @teacher_required
 def invite_student(request, class_id):
-    class_obj = get_object_or_404(Class, id=class_id, teacher=request.user)
+    subject = get_object_or_404(Subject, id=class_id, teacher=request.user)
     if request.method == "POST":
         form = InviteStudentForm(request.POST)
         if form.is_valid():
             invitation = form.save(commit=False)
             invitation.token = uuid.uuid4()
             invitation.role = User.Role.STUDENT
-            invitation.class_id = class_obj.id
+            invitation.class_id = subject.id  # Keep class_id name on Invitation model for now if not refactored
             invitation.save()
 
             invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
@@ -31,19 +31,19 @@ def invite_student(request, class_id):
     else:
         form = InviteStudentForm()
     return render(
-        request, "teacher/invite_student.html", {"form": form, "class_obj": class_obj}
+        request, "teacher/invite_student.html", {"form": form, "subject": subject}
     )
 
 
 @login_required
 def teacher_dashboard(request):
-    classes = Class.objects.filter(teacher=request.user)
+    classes = Subject.objects.filter(teacher=request.user)
     return render(request, "teacher/dashboard.html", {"classes": classes})
 
 
 @teacher_required
 def mark_attendance(request, class_id):
-    class_obj = get_object_or_404(Class, id=class_id, teacher=request.user)
+    subject = get_object_or_404(Subject, id=class_id, teacher=request.user)
 
     # Logic to find current schedule
     now = datetime.datetime.now()
@@ -51,11 +51,11 @@ def mark_attendance(request, class_id):
     current_time = now.time()
 
     # Find schedule for today and current time
-    # Simplified: Find any schedule for this class today that is active or just finished
+    # Simplified: Find any schedule for this subject today that is active or just finished
     # In real app, handle multiple schedules. Here assuming one active or checking time window.
 
     schedules = ClassSchedule.objects.filter(
-        class_obj=class_obj, day_of_week=current_day
+        subject=subject, day_of_week=current_day
     )
     active_schedule = None
 
@@ -107,7 +107,7 @@ def mark_attendance(request, class_id):
     if request.method == "POST":
         # Create Session
         session, created = ClassSession.objects.get_or_create(
-            class_obj=class_obj, schedule=active_schedule, date=now.date()
+            subject=subject, schedule=active_schedule, date=now.date()
         )
 
         if not created:
@@ -116,7 +116,7 @@ def mark_attendance(request, class_id):
             pass
 
         # Process students
-        enrollments = Enrollment.objects.filter(class_obj=class_obj)
+        enrollments = Enrollment.objects.filter(subject=subject)
         for enrollment in enrollments:
             student = enrollment.student
             is_present = request.POST.get(f"student_{student.id}") == "on"
@@ -128,14 +128,14 @@ def mark_attendance(request, class_id):
         return redirect("teacher_dashboard")
 
     # Get students
-    enrollments = Enrollment.objects.filter(class_obj=class_obj)
+    enrollments = Enrollment.objects.filter(subject=subject)
     students = [e.student for e in enrollments]
 
     return render(
         request,
         "teacher/mark_attendance.html",
         {
-            "class_obj": class_obj,
+            "subject": subject,
             "students": students,
             "schedule": active_schedule,
             "date": now.date(),
@@ -145,7 +145,7 @@ def mark_attendance(request, class_id):
 
 @teacher_required
 def class_details(request, class_id):
-    class_obj = get_object_or_404(Class, id=class_id, teacher=request.user)
+    subject = get_object_or_404(Subject, id=class_id, teacher=request.user)
     date_str = request.GET.get("date")
     if date_str:
         date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -153,7 +153,7 @@ def class_details(request, class_id):
         date = datetime.date.today()
 
     # Get students
-    enrollments = Enrollment.objects.filter(class_obj=class_obj)
+    enrollments = Enrollment.objects.filter(subject=subject)
     students = [e.student for e in enrollments]
 
     # Get all sessions for these students on this date
@@ -162,14 +162,14 @@ def class_details(request, class_id):
 
     # 1. Get all enrollments for these students
     all_student_enrollments = Enrollment.objects.filter(student__in=students)
-    all_class_ids = all_student_enrollments.values_list(
-        "class_obj_id", flat=True
+    all_subject_ids = all_student_enrollments.values_list(
+        "subject_id", flat=True
     ).distinct()
 
     # 2. Get sessions for these classes on this date
     sessions = (
-        ClassSession.objects.filter(class_obj_id__in=all_class_ids, date=date)
-        .select_related("class_obj", "schedule")
+        ClassSession.objects.filter(subject_id__in=all_subject_ids, date=date)
+        .select_related("subject", "schedule")
         .order_by("schedule__start_time")
     )
 
@@ -193,10 +193,10 @@ def class_details(request, class_id):
     for student in students:
         attendance_map = {}
         student_enrollments = all_student_enrollments.filter(student=student)
-        student_class_ids = student_enrollments.values_list("class_obj_id", flat=True)
+        student_subject_ids = student_enrollments.values_list("subject_id", flat=True)
 
         for session in unique_sessions:
-            if session.class_obj_id in student_class_ids:
+            if session.subject_id in student_subject_ids:
                 # Check attendance
                 try:
                     att = Attendance.objects.get(session=session, student=student)
@@ -217,7 +217,7 @@ def class_details(request, class_id):
         request,
         "teacher/class_details.html",
         {
-            "class_obj": class_obj,
+            "subject": subject,
             "date": date,
             "sessions": unique_sessions,
             "student_data": student_data,

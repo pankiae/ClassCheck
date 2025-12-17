@@ -6,15 +6,15 @@
 
     <h3 class="text-xl font-bold mb-4">My Classes</h3>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for class in classes %}
+        {% for subject in classes %}
         <div class="bg-white border rounded shadow p-6">
-            <h3 class="text-xl font-bold mb-2">{{ class.subject }}</h3>
-            <p class="text-gray-600 mb-4">{{ class.days }} | {{ class.timing }}</p>
+            <h3 class="text-xl font-bold mb-2">{{ subject.name }}</h3>
+            <p class="text-gray-600 mb-4">{{ subject.days|join:", " }} | {{ subject.timing }}</p>
             <div class="flex flex-col space-y-2">
-                <a href="{% url 'class_details' class.id %}" class="text-blue-500 hover:text-blue-700 font-semibold">
+                <a href="{% url 'class_details' subject.id %}" class="text-blue-500 hover:text-blue-700 font-semibold">
                     View Details & Attendance
                 </a>
-                <a href="{% url 'mark_attendance' class.id %}"
+                <a href="{% url 'mark_attendance' subject.id %}"
                     class="text-green-500 hover:text-green-700 font-semibold">
                     Mark Attendance
                 </a>

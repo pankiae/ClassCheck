@@ -16,8 +16,8 @@ class Class(models.Model):
 
 
 class ClassSchedule(models.Model):
-    class_obj = models.ForeignKey(
-        Class, on_delete=models.CASCADE, related_name="schedules"
+    subject = models.ForeignKey(
+        'Subject', on_delete=models.CASCADE, related_name="schedules"
     )
     day_of_week = models.CharField(max_length=10)  # Mon, Tue, etc.
     start_time = models.TimeField()
@@ -26,12 +26,12 @@ class ClassSchedule(models.Model):
     )  # Calculated based on duration (assuming 1 hour for now)
 
     def __str__(self):
-        return f"{self.class_obj.subject} on {self.day_of_week} at {self.start_time}"
+        return f"{self.subject.name} on {self.day_of_week} at {self.start_time}"
 
 
 class ClassSession(models.Model):
-    class_obj = models.ForeignKey(
-        Class, on_delete=models.CASCADE, related_name="sessions"
+    subject = models.ForeignKey(
+        'Subject', on_delete=models.CASCADE, related_name="sessions"
     )
     schedule = models.ForeignKey(
         ClassSchedule, on_delete=models.SET_NULL, null=True, blank=True
@@ -40,10 +40,10 @@ class ClassSession(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("class_obj", "date", "schedule")
+        unique_together = ("subject", "date", "schedule")
 
     def __str__(self):
-        return f"{self.class_obj.subject} on {self.date}"
+        return f"{self.subject.name} on {self.date}"
 
 
 class Attendance(models.Model):
