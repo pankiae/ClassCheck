@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from student.models import Enrollment
 from users.decorators import teacher_required
-from users.models import User
+from users.models import User, Invitation
 
 from .forms_invite import InviteStudentForm
 from .models import Attendance, Class, ClassSchedule, ClassSession, Subject
@@ -18,16 +18,45 @@ def invite_student(request, class_id):
     if request.method == "POST":
         form = InviteStudentForm(request.POST)
         if form.is_valid():
-            invitation = form.save(commit=False)
-            invitation.token = uuid.uuid4()
-            invitation.role = User.Role.STUDENT
-            invitation.class_id = subject.id  # Keep class_id name on Invitation model for now if not refactored
-            invitation.save()
+            email_string = form.cleaned_data["emails"]
+            # Split and clean
+            emails = [e.strip() for e in email_string.split(",") if e.strip()]
+            
+            success_count = 0
+            failures = []
 
-            invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
-            return render(
-                request, "users/invite_success.html", {"invite_link": invite_link}
-            )
+            for email in emails:
+                # Basic validation (could use EmailValidator)
+                if "@" not in email:
+                    failures.append({"email": email, "reason": "Invalid format"})
+                    continue
+
+                # Check if already enrolled (optional, but good practice)
+                # check if invitation exists
+                if Invitation.objects.filter(email=email, class_id=subject.id).exists():
+                     failures.append({"email": email, "reason": "Already invited"})
+                     continue
+                
+                try:
+                    invitation = Invitation(
+                        email=email,
+                        token=uuid.uuid4(),
+                        role=User.Role.STUDENT,
+                        class_id=subject.id
+                    )
+                    invitation.save()
+                    success_count += 1
+                except Exception as e:
+                    failures.append({"email": email, "reason": str(e)})
+
+            # Logic for invitations sent message (could send actual emails here)
+
+            context = {
+                "subject": subject,
+                "total_success": success_count,
+                "failures": failures
+            }
+            return render(request, "teacher/invite_bulk_success.html", context)
     else:
         form = InviteStudentForm()
     return render(
