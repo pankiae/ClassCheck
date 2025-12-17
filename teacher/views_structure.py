@@ -1,7 +1,10 @@
+import uuid
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
@@ -145,39 +148,65 @@ def add_subject(request):
                 return redirect("manage_structure")
 
         student_class = get_object_or_404(StudentClass, id=class_id)
-        subject = Subject.objects.create(
-            name=subject_name,
-            student_class=student_class,
-            days=days,
-            timing=timing,
-            teacher_email=teacher_email,
-        )
-
+        
         User = get_user_model()
         try:
             user = User.objects.get(email=teacher_email)
-            subject.teacher = user
-            subject.save()
-            # Mock email sending
-            print(f"Assigned existing teacher {user.email} to {subject.name}")
+            # User exists, proceed directly
+            subject = Subject.objects.create(
+                name=subject_name,
+                student_class=student_class,
+                days=days,
+                timing=timing,
+                teacher_email=teacher_email,
+                teacher=user
+            )
+            messages.success(
+                request, f"Subject '{subject_name}' added to '{student_class.name}' and assigned to {user.email}."
+            )
+            
         except User.DoesNotExist:
-            import uuid
+            # User does not exist, try to invite
+            token = uuid.uuid4()
+            invite_link = request.build_absolute_uri(f"/register/{token}/")
+            
+            subject_email = "Invitation to join ClassCheck as a Teacher"
+            message = f"Hi,\n\nYou have been invited to join ClassCheck as a Teacher for the subject '{subject_name}' in class '{student_class.name}'. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
 
-            # Create invitation if not exists
-            Invitation.objects.get_or_create(
-                email=teacher_email,
-                defaults={
-                    "token": uuid.uuid4(),
-                    "role": User.Role.TEACHER,
-                },
-            )
-            print(
-                f"Created invitation for {teacher_email} to join as teacher for {subject.name}"
-            )
-
-        messages.success(
-            request, f"Subject '{subject_name}' added to '{student_class.name}'."
-        )
+            try:
+                send_mail(
+                    subject_email,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [teacher_email],
+                    fail_silently=False,
+                )
+                
+                # Email sent successfully, now save data
+                Invitation.objects.get_or_create(
+                    email=teacher_email,
+                    defaults={
+                        "token": token,
+                        "role": User.Role.TEACHER,
+                    },
+                )
+                
+                Subject.objects.create(
+                    name=subject_name,
+                    student_class=student_class,
+                    days=days,
+                    timing=timing,
+                    teacher_email=teacher_email,
+                )
+                
+                messages.success(
+                    request, f"Subject '{subject_name}' added. Invitation sent to {teacher_email}."
+                )
+                
+            except Exception as e:
+                # Email failed, do not save anything
+                messages.error(request, f"Error sending invitation email: {e}. Subject was NOT created.")
+                return redirect("manage_structure")
 
     return redirect("manage_structure")
 
