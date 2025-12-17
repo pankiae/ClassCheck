@@ -37,7 +37,11 @@ def invite_student(request, class_id):
 
 @login_required
 def teacher_dashboard(request):
-    classes = Subject.objects.filter(teacher=request.user)
+    classes = (
+        Subject.objects.filter(teacher=request.user)
+        .select_related("student_class", "student_class__department")
+        .order_by("student_class__department__name", "student_class__name", "name")
+    )
     return render(request, "teacher/dashboard.html", {"classes": classes})
 
 

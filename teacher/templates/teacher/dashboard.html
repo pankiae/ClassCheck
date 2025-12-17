@@ -5,24 +5,39 @@
     <h2 class="text-2xl font-bold mb-6">Teacher Dashboard</h2>
 
     <h3 class="text-xl font-bold mb-4">My Classes</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for subject in classes %}
-        <div class="bg-white border rounded shadow p-6">
-            <h3 class="text-xl font-bold mb-2">{{ subject.name }}</h3>
-            <p class="text-gray-600 mb-4">{{ subject.days|join:", " }} | {{ subject.timing }}</p>
-            <div class="flex flex-col space-y-2">
-                <a href="{% url 'class_details' subject.id %}" class="text-blue-500 hover:text-blue-700 font-semibold">
-                    View Details & Attendance
-                </a>
-                <a href="{% url 'mark_attendance' subject.id %}"
-                    class="text-green-500 hover:text-green-700 font-semibold">
-                    Mark Attendance
-                </a>
-            </div>
+    {% regroup classes by student_class.department as dept_list %}
+
+    {% for dept in dept_list %}
+        <div class="mb-10">
+            <h3 class="text-2xl font-bold mb-4 border-b-2 border-gray-200 pb-2 text-gray-800">{{ dept.grouper.name|title }}</h3>
+            
+            {% regroup dept.list by student_class as class_list %}
+            
+            {% for class_group in class_list %}
+                <div class="mb-6 ml-4">
+                    <h4 class="text-xl font-semibold mb-3 text-gray-700">{{ class_group.grouper.name|title }}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for subject in class_group.list %}
+                        <div class="bg-white border rounded shadow p-6 hover:shadow-lg transition-shadow">
+                            <h3 class="text-xl font-bold mb-2 text-blue-800">{{ subject.name|title }}</h3>
+                            <p class="text-gray-600 mb-4">{{ subject.days|join:", " }} | {{ subject.timing }}</p>
+                            <div class="flex flex-col space-y-2">
+                                <a href="{% url 'class_details' subject.id %}" class="text-blue-500 hover:text-blue-700 font-semibold">
+                                    View Details & Attendance
+                                </a>
+                                <a href="{% url 'mark_attendance' subject.id %}"
+                                    class="text-green-500 hover:text-green-700 font-semibold">
+                                    Mark Attendance
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-        {% empty %}
-        <p>No classes assigned yet.</p>
-        {% endfor %}
-    </div>
+    {% empty %}
+        <p class="text-gray-600">No classes assigned yet.</p>
+    {% endfor %}
 </div>
 {% endblock content %}
