@@ -13,7 +13,7 @@ from student.models import Enrollment
 from teacher.models import Class
 
 from .decorators import admin_required
-from .forms import InviteTeacherForm, RegisterForm, StudentSignUpForm, TeacherSignUpForm
+from .forms import InviteStudentForm, InviteTeacherForm, RegisterForm, StudentSignUpForm, TeacherSignUpForm
 from .models import Invitation, User
 
 
@@ -31,7 +31,7 @@ def invite_teacher(request):
             invitation = form.save(commit=False)
             invitation.token = uuid.uuid4()
             invitation.role = User.Role.TEACHER
-            invitation.save()
+            # Remove early save
 
             invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
 
@@ -47,6 +47,7 @@ def invite_teacher(request):
                     [invitation.email],
                     fail_silently=False,
                 )
+                invitation.save()  # Save only after successful email
                 messages.success(request, f"Invitation sent to {invitation.email}")
             except Exception as e:
                 messages.error(request, f"Error sending email: {e}")
@@ -55,6 +56,41 @@ def invite_teacher(request):
     else:
         form = InviteTeacherForm()
     return render(request, "users/invite_teacher.html", {"form": form})
+
+
+@admin_required
+def invite_student(request):
+    if request.method == "POST":
+        form = InviteStudentForm(request.POST)
+        if form.is_valid():
+            invitation = form.save(commit=False)
+            invitation.token = uuid.uuid4()
+            invitation.role = User.Role.STUDENT
+            # Remove early save
+
+            invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
+
+            # Send email
+            subject = "Invitation to join ClassCheck as a Student"
+            message = f"Hi {invitation.first_name},\n\nYou have been invited to join ClassCheck as a Student. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
+
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [invitation.email],
+                    fail_silently=False,
+                )
+                invitation.save()  # Save only after successful email
+                messages.success(request, f"Invitation sent to {invitation.email}")
+            except Exception as e:
+                messages.error(request, f"Error sending email: {e}")
+
+            return redirect("invite_student")
+    else:
+        form = InviteStudentForm()
+    return render(request, "users/invite_student.html", {"form": form})
 
 
 def register(request, token):

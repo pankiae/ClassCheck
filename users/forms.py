@@ -10,6 +10,12 @@ class InviteTeacherForm(forms.ModelForm):
         fields = ["first_name", "last_name", "email"]
 
 
+class InviteStudentForm(forms.ModelForm):
+    class Meta:
+        model = Invitation
+        fields = ["first_name", "last_name", "email"]
+
+
 class RegisterForm(UserCreationForm):
     class Meta:
         model = User
