@@ -28,31 +28,47 @@ def invite_teacher(request):
     if request.method == "POST":
         form = InviteTeacherForm(request.POST)
         if form.is_valid():
-            invitation = form.save(commit=False)
-            invitation.token = uuid.uuid4()
-            invitation.role = User.Role.TEACHER
-            # Remove early save
+            email_string = form.cleaned_data["emails"]
+            emails = [e.strip() for e in email_string.split(",") if e.strip()]
+            
+            success_count = 0
+            failures = []
 
-            invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
+            for email in emails:
+                if "@" not in email:
+                    failures.append({"email": email, "reason": "Invalid format"})
+                    continue
 
-            # Send email
-            subject = "Invitation to join ClassCheck as a Teacher"
-            message = f"Hi {invitation.first_name},\n\nYou have been invited to join ClassCheck. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
+                if Invitation.objects.filter(email=email).exists():
+                     failures.append({"email": email, "reason": "Already invited"})
+                     continue
+                
+                try:
+                    invitation = Invitation(
+                        email=email,
+                        token=uuid.uuid4(),
+                        role=User.Role.TEACHER
+                    )
+                    
+                    invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
+                    subject = "Invitation to join ClassCheck as a Teacher"
+                    message = f"Hi,\n\nYou have been invited to join ClassCheck. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
+                    
+                    send_mail(
+                        subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False
+                    )
+                    invitation.save()
+                    success_count += 1
+                except Exception as e:
+                    failures.append({"email": email, "reason": str(e)})
 
-            try:
-                send_mail(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [invitation.email],
-                    fail_silently=False,
-                )
-                invitation.save()  # Save only after successful email
-                messages.success(request, f"Invitation sent to {invitation.email}")
-            except Exception as e:
-                messages.error(request, f"Error sending email: {e}")
-
-            return redirect("invite_teacher")
+            context = {
+                "title": "Teachers",
+                "total_success": success_count,
+                "failures": failures,
+                "dashboard_url": "invite_teacher" # Redirect back to same page logic or dashboard
+            }
+            return render(request, "users/invite_success.html", context)
     else:
         form = InviteTeacherForm()
     return render(request, "users/invite_teacher.html", {"form": form})
@@ -63,31 +79,47 @@ def invite_student(request):
     if request.method == "POST":
         form = InviteStudentForm(request.POST)
         if form.is_valid():
-            invitation = form.save(commit=False)
-            invitation.token = uuid.uuid4()
-            invitation.role = User.Role.STUDENT
-            # Remove early save
+            email_string = form.cleaned_data["emails"]
+            emails = [e.strip() for e in email_string.split(",") if e.strip()]
+            
+            success_count = 0
+            failures = []
 
-            invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
+            for email in emails:
+                if "@" not in email:
+                    failures.append({"email": email, "reason": "Invalid format"})
+                    continue
 
-            # Send email
-            subject = "Invitation to join ClassCheck as a Student"
-            message = f"Hi {invitation.first_name},\n\nYou have been invited to join ClassCheck as a Student. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
+                if Invitation.objects.filter(email=email).exists():
+                     failures.append({"email": email, "reason": "Already invited"})
+                     continue
+                
+                try:
+                    invitation = Invitation(
+                        email=email,
+                        token=uuid.uuid4(),
+                        role=User.Role.STUDENT
+                    )
+                    
+                    invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
+                    subject = "Invitation to join ClassCheck as a Student"
+                    message = f"Hi,\n\nYou have been invited to join ClassCheck as a Student. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
+                    
+                    send_mail(
+                        subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False
+                    )
+                    invitation.save()
+                    success_count += 1
+                except Exception as e:
+                    failures.append({"email": email, "reason": str(e)})
 
-            try:
-                send_mail(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [invitation.email],
-                    fail_silently=False,
-                )
-                invitation.save()  # Save only after successful email
-                messages.success(request, f"Invitation sent to {invitation.email}")
-            except Exception as e:
-                messages.error(request, f"Error sending email: {e}")
-
-            return redirect("invite_student")
+            context = {
+                "title": "Students",
+                "total_success": success_count,
+                "failures": failures,
+                "dashboard_url": "invite_student"
+            }
+            return render(request, "users/invite_success.html", context)
     else:
         form = InviteStudentForm()
     return render(request, "users/invite_student.html", {"form": form})

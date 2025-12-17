@@ -1,14 +1,85 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-md mx-auto bg-white p-8 rounded shadow-md">
-    <h2 class="text-2xl font-bold mb-6">Invite Student</h2>
-    <form method="post">
+<div class="max-w-2xl mx-auto bg-white p-8 rounded shadow-md">
+    <h2 class="text-2xl font-bold mb-6">Invite Students</h2>
+    
+    <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2">
+            Enter Emails (comma or newline separated)
+        </label>
+        <textarea id="rawEmails" rows="4" 
+            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            placeholder="student1@example.com, student2@example.com"></textarea>
+        <button type="button" onclick="processEmails()" 
+            class="mt-2 text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-1 px-3 rounded">
+            Process Emails
+        </button>
+    </div>
+
+    <form method="post" id="inviteForm" onsubmit="prepare submission()">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Send Invitation
+        {{ form.emails }}
+
+        <div id="emailListContainer" class="mb-6 space-y-2 max-h-96 overflow-y-auto">
+            <!-- Dynamic list items will appear here -->
+        </div>
+
+        <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Send Invites
         </button>
     </form>
 </div>
+
+<script>
+    let emailList = [];
+
+    function processEmails() {
+        const rawInput = document.getElementById('rawEmails').value;
+        const container = document.getElementById('emailListContainer');
+        const newEmails = rawInput.split(/[\s,]+/).filter(e => e.trim().length > 0);
+        emailList = [...emailList, ...newEmails];
+        document.getElementById('rawEmails').value = '';
+        renderList();
+    }
+
+    function renderList() {
+        const container = document.getElementById('emailListContainer');
+        container.innerHTML = '';
+        emailList.forEach((email, index) => {
+            const div = document.createElement('div');
+            div.className = 'flex items-center space-x-2 bg-gray-50 p-2 rounded border';
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = email;
+            input.className = 'flex-grow bg-transparent border-none focus:ring-0 text-gray-700';
+            input.onchange = (e) => updateEmail(index, e.target.value);
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.className = 'text-red-500 hover:text-red-700 font-bold px-2';
+            removeBtn.onclick = () => removeEmail(index);
+
+            div.appendChild(input);
+            div.appendChild(removeBtn);
+            container.appendChild(div);
+        });
+    }
+
+    function updateEmail(index, value) {
+        emailList[index] = value;
+    }
+
+    function removeEmail(index) {
+        emailList.splice(index, 1);
+        renderList();
+    }
+
+    document.getElementById('inviteForm').addEventListener('submit', function(e) {
+        const cleanList = emailList.filter(e => e.trim().length > 0);
+        document.querySelector('input[name="emails"]').value = cleanList.join(',');
+    });
+</script>
 {% endblock %}

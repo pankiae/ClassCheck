@@ -4,16 +4,12 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import Invitation, User
 
 
-class InviteTeacherForm(forms.ModelForm):
-    class Meta:
-        model = Invitation
-        fields = ["first_name", "last_name", "email"]
+class InviteTeacherForm(forms.Form):
+    emails = forms.CharField(widget=forms.HiddenInput(), required=False)
 
 
-class InviteStudentForm(forms.ModelForm):
-    class Meta:
-        model = Invitation
-        fields = ["first_name", "last_name", "email"]
+class InviteStudentForm(forms.Form):
+    emails = forms.CharField(widget=forms.HiddenInput(), required=False)
 
 
 class RegisterForm(UserCreationForm):
