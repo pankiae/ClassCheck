@@ -30,7 +30,7 @@ def invite_teacher(request):
         if form.is_valid():
             email_string = form.cleaned_data["emails"]
             emails = [e.strip() for e in email_string.split(",") if e.strip()]
-            
+
             success_count = 0
             failures = []
 
@@ -40,22 +40,26 @@ def invite_teacher(request):
                     continue
 
                 if Invitation.objects.filter(email=email).exists():
-                     failures.append({"email": email, "reason": "Already invited"})
-                     continue
-                
+                    failures.append({"email": email, "reason": "Already invited"})
+                    continue
+
                 try:
                     invitation = Invitation(
-                        email=email,
-                        token=uuid.uuid4(),
-                        role=User.Role.TEACHER
+                        email=email, token=uuid.uuid4(), role=User.Role.TEACHER
                     )
-                    
-                    invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
+
+                    invite_link = request.build_absolute_uri(
+                        f"/register/{invitation.token}/"
+                    )
                     subject = "Invitation to join ClassCheck as a Teacher"
                     message = f"Hi,\n\nYou have been invited to join ClassCheck. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
-                    
+
                     send_mail(
-                        subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=False,
                     )
                     invitation.save()
                     success_count += 1
@@ -66,7 +70,7 @@ def invite_teacher(request):
                 "title": "Teachers",
                 "total_success": success_count,
                 "failures": failures,
-                "dashboard_url": "invite_teacher" # Redirect back to same page logic or dashboard
+                "dashboard_url": "invite_teacher",  # Redirect back to same page logic or dashboard
             }
             return render(request, "users/invite_success.html", context)
     else:
@@ -81,7 +85,7 @@ def invite_student(request):
         if form.is_valid():
             email_string = form.cleaned_data["emails"]
             emails = [e.strip() for e in email_string.split(",") if e.strip()]
-            
+
             success_count = 0
             failures = []
 
@@ -91,22 +95,26 @@ def invite_student(request):
                     continue
 
                 if Invitation.objects.filter(email=email).exists():
-                     failures.append({"email": email, "reason": "Already invited"})
-                     continue
-                
+                    failures.append({"email": email, "reason": "Already invited"})
+                    continue
+
                 try:
                     invitation = Invitation(
-                        email=email,
-                        token=uuid.uuid4(),
-                        role=User.Role.STUDENT
+                        email=email, token=uuid.uuid4(), role=User.Role.STUDENT
                     )
-                    
-                    invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
+
+                    invite_link = request.build_absolute_uri(
+                        f"/register/{invitation.token}/"
+                    )
                     subject = "Invitation to join ClassCheck as a Student"
                     message = f"Hi,\n\nYou have been invited to join ClassCheck as a Student. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
-                    
+
                     send_mail(
-                        subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=False,
                     )
                     invitation.save()
                     success_count += 1
@@ -117,7 +125,7 @@ def invite_student(request):
                 "title": "Students",
                 "total_success": success_count,
                 "failures": failures,
-                "dashboard_url": "invite_student"
+                "dashboard_url": "invite_student",
             }
             return render(request, "users/invite_success.html", context)
     else:
@@ -143,6 +151,14 @@ def register(request, token):
             user.save()
             invitation.is_used = True
             invitation.save()
+
+            # Assign pre-created subjects to the new teacher
+            if user.is_teacher():
+                from teacher.models import Subject
+
+                Subject.objects.filter(
+                    teacher_email=user.email, teacher__isnull=True
+                ).update(teacher=user)
 
             # Handle Enrollment if class_id is present
             if invitation.class_id:
@@ -184,8 +200,6 @@ def landing_page(request):
     if request.user.is_authenticated:
         return redirect("role_based_redirect")
     return render(request, "users/landing.html")
-
-
 
 
 @login_required

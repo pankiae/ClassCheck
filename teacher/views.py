@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from student.models import Enrollment
 from users.decorators import teacher_required
-from users.models import User, Invitation
+from users.models import Invitation, User
 
 from .forms_invite import InviteStudentForm
 from .models import Attendance, Class, ClassSchedule, ClassSession, Subject
@@ -21,7 +21,7 @@ def invite_student(request, class_id):
             email_string = form.cleaned_data["emails"]
             # Split and clean
             emails = [e.strip() for e in email_string.split(",") if e.strip()]
-            
+
             success_count = 0
             failures = []
 
@@ -34,22 +34,24 @@ def invite_student(request, class_id):
                 # Check if already enrolled (optional, but good practice)
                 # check if invitation exists
                 if Invitation.objects.filter(email=email, class_id=subject.id).exists():
-                     failures.append({"email": email, "reason": "Already invited"})
-                     continue
-                
+                    failures.append({"email": email, "reason": "Already invited"})
+                    continue
+
                 try:
                     invitation = Invitation(
                         email=email,
                         token=uuid.uuid4(),
                         role=User.Role.STUDENT,
-                        class_id=subject.id
+                        class_id=subject.id,
                     )
-                    
-                    invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
+
+                    invite_link = request.build_absolute_uri(
+                        f"/register/{invitation.token}/"
+                    )
                     # Send email
                     from django.conf import settings
                     from django.core.mail import send_mail
-                    
+
                     subject_email = f"Invitation to join {subject.name}"
                     message = f"Hi,\n\nYou have been invited to join the class '{subject.name}' on ClassCheck. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
 
@@ -70,7 +72,7 @@ def invite_student(request, class_id):
             context = {
                 "subject": subject,
                 "total_success": success_count,
-                "failures": failures
+                "failures": failures,
             }
             return render(request, "teacher/invite_bulk_success.html", context)
     else:
@@ -82,8 +84,16 @@ def invite_student(request, class_id):
 
 @login_required
 def teacher_dashboard(request):
+    subjects = Subject.objects.filter(teacher=request.user)
+    print(subjects)
     classes = (
-        Subject.objects.filter(teacher=request.user)
+        Subject.objects.filter(
+            teacher=request.user,
+            is_active=True,
+            student_class__is_active=True,
+            student_class__department__is_active=True,
+            student_class__department__session__is_active=True,
+        )
         .select_related("student_class", "student_class__department")
         .order_by("student_class__department__name", "student_class__name", "name")
     )
@@ -103,9 +113,7 @@ def mark_attendance(request, class_id):
     # Simplified: Find any schedule for this subject today that is active or just finished
     # In real app, handle multiple schedules. Here assuming one active or checking time window.
 
-    schedules = ClassSchedule.objects.filter(
-        subject=subject, day_of_week=current_day
-    )
+    schedules = ClassSchedule.objects.filter(subject=subject, day_of_week=current_day)
     active_schedule = None
 
     for schedule in schedules:
