@@ -25,7 +25,7 @@
             <!-- Dynamic list items will appear here -->
         </div>
 
-        <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        <button type="submit" id="sendInvitesBtn" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed" disabled>
             Send Invites
         </button>
     </form>
@@ -36,16 +36,46 @@
 
     function processEmails() {
         const rawInput = document.getElementById('rawEmails').value;
-        const container = document.getElementById('emailListContainer');
-        const newEmails = rawInput.split(/[\s,]+/).filter(e => e.trim().length > 0);
-        emailList = [...emailList, ...newEmails];
-        document.getElementById('rawEmails').value = '';
+        if (!rawInput.trim()) return;
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        // Split by comma or newline, handle potential whitespace
+        const potentialEmails = rawInput.split(/[\s,]+/).filter(e => e.trim().length > 0);
+        
+        const validEmails = [];
+        const invalidEmails = [];
+
+        potentialEmails.forEach(email => {
+            if (emailRegex.test(email)) {
+                // Check for duplicates in the existing list
+                if (!emailList.includes(email)) {
+                    validEmails.push(email);
+                }
+            } else {
+                invalidEmails.push(email);
+            }
+        });
+
+        // Add valid emails to the main list
+        emailList = [...emailList, ...validEmails];
+
+        // Put invalid emails back into the textarea
+        const invalidString = invalidEmails.join(', ');
+        document.getElementById('rawEmails').value = invalidString;
+
         renderList();
     }
 
     function renderList() {
         const container = document.getElementById('emailListContainer');
+        const submitBtn = document.getElementById('sendInvitesBtn');
+        
         container.innerHTML = '';
+        
+        // Enable/Disable submit button
+        submitBtn.disabled = emailList.length === 0;
+
         emailList.forEach((email, index) => {
             const div = document.createElement('div');
             div.className = 'flex items-center space-x-2 bg-gray-50 p-2 rounded border';
