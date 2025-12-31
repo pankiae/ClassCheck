@@ -9,7 +9,7 @@ from users.decorators import teacher_required
 from users.models import Invitation, User
 
 from .forms_invite import InviteStudentForm
-from .models import Attendance, Class, ClassSchedule, ClassSession, Subject
+from .models import Attendance, ClassSchedule, ClassSession, Subject
 
 
 @teacher_required

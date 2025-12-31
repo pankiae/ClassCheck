@@ -10,7 +10,6 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, TemplateView
 
 from student.models import Enrollment
-from teacher.models import Class
 
 from .decorators import admin_required
 from .forms import InviteStudentForm, InviteTeacherForm, RegisterForm
@@ -163,9 +162,11 @@ def register(request, token):
             # Handle Enrollment if class_id is present
             if invitation.class_id:
                 try:
-                    class_obj = Class.objects.get(id=invitation.class_id)
-                    Enrollment.objects.create(student=user, class_obj=class_obj)
-                except Class.DoesNotExist:
+                    from teacher.models import Subject
+
+                    subject = Subject.objects.get(id=invitation.class_id)
+                    Enrollment.objects.create(student=user, subject=subject)
+                except Subject.DoesNotExist:
                     pass  # Should not happen ideally
 
             login(request, user)
@@ -188,7 +189,10 @@ def register(request, token):
 def superuser_dashboard(request):
     teachers = User.objects.filter(role=User.Role.TEACHER)
     students = User.objects.filter(role=User.Role.STUDENT)
-    classes = Class.objects.all()
+
+    from teacher.models import Subject
+
+    classes = Subject.objects.all()
     return render(
         request,
         "users/dashboard.html",
