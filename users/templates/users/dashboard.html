@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto bg-white p-8 rounded shadow-md">
+    <h2 class="text-2xl font-bold mb-6">Superuser Dashboard</h2>
+
+    <div class="mb-8">
+        <h3 class="text-xl font-bold mb-4">Actions</h3>
+        <a href="{% url 'invite_teacher' %}"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-4">
+            Invite Teacher
+        </a>
+        <a href="{% url 'list_proposals' %}"
+            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+            Review Class Proposals
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+            <h3 class="text-xl font-bold mb-4">Teachers</h3>
+            <ul class="bg-gray-100 rounded p-4">
+                {% for teacher in teachers %}
+                <li class="mb-2 border-b pb-2 last:border-0">{{ teacher.email }}</li>
+                {% empty %}
+                <li>No teachers yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div>
+            <h3 class="text-xl font-bold mb-4">Students</h3>
+            <ul class="bg-gray-100 rounded p-4">
+                {% for student in students %}
+                <li class="mb-2 border-b pb-2 last:border-0">{{ student.email }}</li>
+                {% empty %}
+                <li>No students yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div>
+            <h3 class="text-xl font-bold mb-4">Classes</h3>
+            <ul class="bg-gray-100 rounded p-4">
+                {% for class in classes %}
+                <li class="mb-2 border-b pb-2 last:border-0">
+                    <strong>{{ class.subject }}</strong> by {{ class.teacher.email }}<br>
+                    <a href="{% url 'class_details' class.id %}" class="text-blue-500 hover:text-blue-700 text-sm">View
+                        Details</a>
+                </li>
+                {% empty %}
+                <li>No classes yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
