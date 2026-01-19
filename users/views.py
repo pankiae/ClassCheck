@@ -10,10 +10,9 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, TemplateView
 
 from student.models import Enrollment
-from teacher.models import Class
 
 from .decorators import admin_required
-from .forms import InviteTeacherForm, RegisterForm, StudentSignUpForm, TeacherSignUpForm
+from .forms import InviteStudentForm, InviteTeacherForm, RegisterForm
 from .models import Invitation, User
 
 
@@ -28,33 +27,109 @@ def invite_teacher(request):
     if request.method == "POST":
         form = InviteTeacherForm(request.POST)
         if form.is_valid():
-            invitation = form.save(commit=False)
-            invitation.token = uuid.uuid4()
-            invitation.role = User.Role.TEACHER
-            invitation.save()
+            email_string = form.cleaned_data["emails"]
+            emails = [e.strip() for e in email_string.split(",") if e.strip()]
 
-            invite_link = request.build_absolute_uri(f"/register/{invitation.token}/")
+            success_count = 0
+            failures = []
 
-            # Send email
-            subject = "Invitation to join ClassCheck as a Teacher"
-            message = f"Hi {invitation.first_name},\n\nYou have been invited to join ClassCheck. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
+            for email in emails:
+                if "@" not in email:
+                    failures.append({"email": email, "reason": "Invalid format"})
+                    continue
 
-            try:
-                send_mail(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [invitation.email],
-                    fail_silently=False,
-                )
-                messages.success(request, f"Invitation sent to {invitation.email}")
-            except Exception as e:
-                messages.error(request, f"Error sending email: {e}")
+                if Invitation.objects.filter(email=email).exists():
+                    failures.append({"email": email, "reason": "Already invited"})
+                    continue
 
-            return redirect("invite_teacher")
+                try:
+                    invitation = Invitation(
+                        email=email, token=uuid.uuid4(), role=User.Role.TEACHER
+                    )
+
+                    invite_link = request.build_absolute_uri(
+                        f"/register/{invitation.token}/"
+                    )
+                    subject = "Invitation to join ClassCheck as a Teacher"
+                    message = f"Hi,\n\nYou have been invited to join ClassCheck. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
+
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=False,
+                    )
+                    invitation.save()
+                    success_count += 1
+                except Exception as e:
+                    failures.append({"email": email, "reason": str(e)})
+
+            context = {
+                "title": "Teachers",
+                "total_success": success_count,
+                "failures": failures,
+                "dashboard_url": "invite_teacher",  # Redirect back to same page logic or dashboard
+            }
+            return render(request, "users/invite_success.html", context)
     else:
         form = InviteTeacherForm()
     return render(request, "users/invite_teacher.html", {"form": form})
+
+
+@admin_required
+def invite_student(request):
+    if request.method == "POST":
+        form = InviteStudentForm(request.POST)
+        if form.is_valid():
+            email_string = form.cleaned_data["emails"]
+            emails = [e.strip() for e in email_string.split(",") if e.strip()]
+
+            success_count = 0
+            failures = []
+
+            for email in emails:
+                if "@" not in email:
+                    failures.append({"email": email, "reason": "Invalid format"})
+                    continue
+
+                if Invitation.objects.filter(email=email).exists():
+                    failures.append({"email": email, "reason": "Already invited"})
+                    continue
+
+                try:
+                    invitation = Invitation(
+                        email=email, token=uuid.uuid4(), role=User.Role.STUDENT
+                    )
+
+                    invite_link = request.build_absolute_uri(
+                        f"/register/{invitation.token}/"
+                    )
+                    subject = "Invitation to join ClassCheck as a Student"
+                    message = f"Hi,\n\nYou have been invited to join ClassCheck as a Student. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
+
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=False,
+                    )
+                    invitation.save()
+                    success_count += 1
+                except Exception as e:
+                    failures.append({"email": email, "reason": str(e)})
+
+            context = {
+                "title": "Students",
+                "total_success": success_count,
+                "failures": failures,
+                "dashboard_url": "invite_student",
+            }
+            return render(request, "users/invite_success.html", context)
+    else:
+        form = InviteStudentForm()
+    return render(request, "users/invite_student.html", {"form": form})
 
 
 def register(request, token):
@@ -76,12 +151,22 @@ def register(request, token):
             invitation.is_used = True
             invitation.save()
 
+            # Assign pre-created subjects to the new teacher
+            if user.is_teacher():
+                from teacher.models import Subject
+
+                Subject.objects.filter(
+                    teacher_email=user.email, teacher__isnull=True
+                ).update(teacher=user)
+
             # Handle Enrollment if class_id is present
             if invitation.class_id:
                 try:
-                    class_obj = Class.objects.get(id=invitation.class_id)
-                    Enrollment.objects.create(student=user, class_obj=class_obj)
-                except Class.DoesNotExist:
+                    from teacher.models import Subject
+
+                    subject = Subject.objects.get(id=invitation.class_id)
+                    Enrollment.objects.create(student=user, subject=subject)
+                except Subject.DoesNotExist:
                     pass  # Should not happen ideally
 
             login(request, user)
@@ -104,7 +189,10 @@ def register(request, token):
 def superuser_dashboard(request):
     teachers = User.objects.filter(role=User.Role.TEACHER)
     students = User.objects.filter(role=User.Role.STUDENT)
-    classes = Class.objects.all()
+
+    from teacher.models import Subject
+
+    classes = Subject.objects.all()
     return render(
         request,
         "users/dashboard.html",
@@ -116,38 +204,6 @@ def landing_page(request):
     if request.user.is_authenticated:
         return redirect("role_based_redirect")
     return render(request, "users/landing.html")
-
-
-class TeacherSignUpView(CreateView):
-    model = User
-    form_class = TeacherSignUpForm
-    template_name = "users/register.html"
-
-    def get_context_data(self, **kwargs):
-        kwargs["user_type"] = "Teacher"
-        return super().get_context_data(**kwargs)
-
-    def form_valid(self, form):
-        user = form.save()
-        login(self.request, user)
-        messages.success(self.request, "Teacher account created successfully!")
-        return redirect("teacher_dashboard")
-
-
-class StudentSignUpView(CreateView):
-    model = User
-    form_class = StudentSignUpForm
-    template_name = "users/register.html"
-
-    def get_context_data(self, **kwargs):
-        kwargs["user_type"] = "Student"
-        return super().get_context_data(**kwargs)
-
-    def form_valid(self, form):
-        user = form.save()
-        login(self.request, user)
-        messages.success(self.request, "Student account created successfully!")
-        return redirect("student_dashboard")
 
 
 @login_required

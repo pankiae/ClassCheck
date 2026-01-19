@@ -6,19 +6,27 @@
 
     <div class="mb-8">
         <h3 class="text-xl font-bold mb-4">Actions</h3>
-        <a href="{% url 'invite_teacher' %}"
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-4">
-            Invite Teacher
-        </a>
-        <a href="{% url 'list_proposals' %}"
-            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-            Review Class Proposals
-        </a>
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'manage_structure' %}"
+                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Manage Structure
+            </a>
+            <a href="/admin/"
+                class="bg-gray-600 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">
+                Admin Panel
+            </a>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
-            <h3 class="text-xl font-bold mb-4">Teachers</h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Teachers</h3>
+                <a href="{% url 'invite_teacher' %}"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm">
+                    Invite
+                </a>
+            </div>
             <ul class="bg-gray-100 rounded p-4">
                 {% for teacher in teachers %}
                 <li class="mb-2 border-b pb-2 last:border-0">{{ teacher.email }}</li>
@@ -29,7 +37,13 @@
         </div>
 
         <div>
-            <h3 class="text-xl font-bold mb-4">Students</h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Students</h3>
+                <a href="{% url 'invite_student' %}"
+                    class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-3 rounded text-sm">
+                    Invite
+                </a>
+            </div>
             <ul class="bg-gray-100 rounded p-4">
                 {% for student in students %}
                 <li class="mb-2 border-b pb-2 last:border-0">{{ student.email }}</li>

@@ -25,7 +25,7 @@ class AcademicStructureTest(TestCase):
         self.assertIsNotNone(session)
         self.assertTrue(session.year_range.startswith("20"))  # e.g. 2024-2025
 
-        dept = Department.objects.get(name="Science")
+        dept = Department.objects.get(name="science")
         self.assertEqual(dept.session, session)
 
         # 2. Add Class
@@ -35,21 +35,23 @@ class AcademicStructureTest(TestCase):
         )
         self.assertEqual(response.status_code, 302)
 
-        cls = StudentClass.objects.get(name="Class 10")
+        # Class name is auto-generated based on department name
+        cls = StudentClass.objects.get(name="science-1")
         self.assertEqual(cls.department, dept)
 
         # 3. Add Subject
         response = self.client.post(
-            "/teacher/structure/subject/add/", {"name": "Physics", "class_id": cls.id}
+            "/teacher/structure/subject/add/",
+            {"name": "Physics", "class_id": cls.id, "teacher_email": "admin@example.com", "timing": "10:00"},
         )
         self.assertEqual(response.status_code, 302)
 
-        subject = Subject.objects.get(name="Physics")
+        subject = Subject.objects.get(name="physics")
         self.assertEqual(subject.student_class, cls)
 
         # 4. Verify View Renders
         response = self.client.get("/teacher/structure/")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Science")
-        self.assertContains(response, "Class 10")
-        self.assertContains(response, "Physics")
+        self.assertContains(response, "science")
+        self.assertContains(response, "science-1")
+        self.assertContains(response, "physics")

@@ -2,42 +2,9 @@ from django.conf import settings
 from django.db import models
 
 
-class ClassProposal(models.Model):
-    STATUS_CHOICES = [
-        ("PENDING", "Pending"),
-        ("APPROVED", "Approved"),
-        ("REJECTED", "Rejected"),
-    ]
-
-    teacher = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="proposals"
-    )
-    subject = models.CharField(max_length=100)
-    timing = models.TimeField()
-    days = models.CharField(max_length=100)  # e.g., "Mon,Wed,Fri"
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING")
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.subject} by {self.teacher.email} ({self.status})"
-
-
-class Class(models.Model):
-    teacher = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="classes"
-    )
-    subject = models.CharField(max_length=100)
-    timing = models.TimeField()
-    days = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.subject} ({self.teacher.email})"
-
-
 class ClassSchedule(models.Model):
-    class_obj = models.ForeignKey(
-        Class, on_delete=models.CASCADE, related_name="schedules"
+    subject = models.ForeignKey(
+        "Subject", on_delete=models.CASCADE, related_name="schedules"
     )
     day_of_week = models.CharField(max_length=10)  # Mon, Tue, etc.
     start_time = models.TimeField()
@@ -46,12 +13,12 @@ class ClassSchedule(models.Model):
     )  # Calculated based on duration (assuming 1 hour for now)
 
     def __str__(self):
-        return f"{self.class_obj.subject} on {self.day_of_week} at {self.start_time}"
+        return f"{self.subject.name} on {self.day_of_week} at {self.start_time}"
 
 
 class ClassSession(models.Model):
-    class_obj = models.ForeignKey(
-        Class, on_delete=models.CASCADE, related_name="sessions"
+    subject = models.ForeignKey(
+        "Subject", on_delete=models.CASCADE, related_name="sessions"
     )
     schedule = models.ForeignKey(
         ClassSchedule, on_delete=models.SET_NULL, null=True, blank=True
@@ -60,10 +27,10 @@ class ClassSession(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("class_obj", "date", "schedule")
+        unique_together = ("subject", "date", "schedule")
 
     def __str__(self):
-        return f"{self.class_obj.subject} on {self.date}"
+        return f"{self.subject.name} on {self.date}"
 
 
 class Attendance(models.Model):

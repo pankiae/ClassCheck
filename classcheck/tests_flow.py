@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
 from student.models import Enrollment
-from teacher.models import Attendance, Class, ClassProposal, ClassSchedule, ClassSession
+from teacher.models import Attendance, Class, ClassSchedule, ClassSession
 from users.models import Invitation
 
 User = get_user_model()
@@ -47,27 +47,18 @@ class EndToEndFlowTest(TestCase):
         invitation.is_used = True
         invitation.save()
 
-        # 3. Teacher proposes Class
-        self.client.force_login(teacher)
-        response = self.client.post(
-            "/teacher/proposal/create/",
-            {"subject": "Math 101", "timing": "10:00", "days": "Mon,Wed,Fri"},
-        )
-        self.assertEqual(response.status_code, 302)  # Redirect to dashboard
-        proposal = ClassProposal.objects.get(subject="Math 101")
-        self.assertEqual(proposal.status, "PENDING")
-        self.client.logout()
-
-        # 4. Superuser approves Class
+        # 3. Admin assignment of Class (replacing proposal flow)
+        # In real app, Admin uses "manage_structure" views. Here we can use ORM or client.post to admin views.
+        # Let's use ORM for simplicity as we want to test the FLOW after creation.
         self.client.force_login(self.superuser)
-        response = self.client.post(
-            f"/teacher/proposal/{proposal.id}/approve/", {"action": "approve"}
+
+        # Admin creates class directly
+        class_obj = Class.objects.create(
+            teacher=teacher,
+            subject="Math 101",
+            timing=datetime.time(10, 0),
+            days="Mon,Wed,Fri",
         )
-        self.assertEqual(response.status_code, 302)
-        proposal.refresh_from_db()
-        self.assertEqual(proposal.status, "APPROVED")
-        class_obj = Class.objects.get(subject="Math 101")
-        self.assertTrue(ClassSchedule.objects.filter(class_obj=class_obj).exists())
         self.client.logout()
 
         # 5. Teacher invites Student
