@@ -18,6 +18,9 @@ from .models import Invitation, User
 
 def logout_view(request):
     logout(request)
+    host = request.META.get('HTTP_X_FORWARDED_HOST') or request.get_host()
+    print(f"User logged out from host: {host}")
+
     messages.success(request, "You have been logged out successfully.")
     return redirect("login")
 
@@ -46,10 +49,10 @@ def invite_teacher(request):
                     invitation = Invitation(
                         email=email, token=uuid.uuid4(), role=User.Role.TEACHER
                     )
-
-                    invite_link = request.build_absolute_uri(
-                        f"/register/{invitation.token}/"
-                    )
+                    scheme = request.scheme
+                    # Check for proxy headers first, fallback to request host
+                    host = request.META.get('HTTP_X_FORWARDED_HOST') or request.get_host()
+                    invite_link = f"{scheme}://{host}/register/{invitation.token}/"
                     subject = "Invitation to join ClassCheck as a Teacher"
                     message = f"Hi,\n\nYou have been invited to join ClassCheck. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
 
@@ -102,9 +105,10 @@ def invite_student(request):
                         email=email, token=uuid.uuid4(), role=User.Role.STUDENT
                     )
 
-                    invite_link = request.build_absolute_uri(
-                        f"/register/{invitation.token}/"
-                    )
+                    scheme = request.scheme
+                    # Check for proxy headers first, fallback to request host
+                    host = request.META.get('HTTP_X_FORWARDED_HOST') or request.get_host()
+                    invite_link = f"{scheme}://{host}/register/{invitation.token}/"
                     subject = "Invitation to join ClassCheck as a Student"
                     message = f"Hi,\n\nYou have been invited to join ClassCheck as a Student. Please click the link below to set your password and activate your account:\n\n{invite_link}\n\nThis link is valid for 72 hours.\n\nBest regards,\nClassCheck Team"
 
