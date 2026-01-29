@@ -1,6 +1,6 @@
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
-from users.models import Invitation
+from user.models import Invitation
 from unittest.mock import patch
 
 User = get_user_model()
@@ -15,8 +15,8 @@ class InvitationTransactionTest(TestCase):
 
     def test_invite_teacher_email_failure_no_save(self):
         # Mock send_mail to raise an exception
-        # Patch where it is used (users.views)
-        with patch('users.views.send_mail', side_effect=Exception("SMTP Error")):
+        # Patch where it is used (user.views)
+        with patch('user.views.send_mail', side_effect=Exception("SMTP Error")):
             email_string = "fail@example.com"
             response = self.client.post(
                 "/invite-teacher/",
@@ -31,7 +31,7 @@ class InvitationTransactionTest(TestCase):
 
     def test_invite_teacher_email_success_saves(self):
         # Mock send_mail to succeed
-        with patch('users.views.send_mail') as mock_send:
+        with patch('user.views.send_mail') as mock_send:
             email_string = "success@example.com"
             response = self.client.post(
                 "/invite-teacher/",

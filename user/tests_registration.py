@@ -4,7 +4,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from teacher.models import AcademicSession, Department, StudentClass, Subject
-from users.models import Invitation, User
+from user.models import Invitation, User
 
 
 class TeacherRegistrationTest(TestCase):

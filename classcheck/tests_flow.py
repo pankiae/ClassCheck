@@ -6,7 +6,7 @@ from django.test import Client, TestCase
 
 from student.models import Enrollment
 from teacher.models import Attendance, Class, ClassSchedule, ClassSession
-from users.models import Invitation
+from user.models import Invitation
 
 User = get_user_model()
 

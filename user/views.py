@@ -71,10 +71,10 @@ def invite_teacher(request):
                 "failures": failures,
                 "dashboard_url": "invite_teacher",  # Redirect back to same page logic or dashboard
             }
-            return render(request, "users/invite_success.html", context)
+            return render(request, "user/invite_success.html", context)
     else:
         form = InviteTeacherForm()
-    return render(request, "users/invite_teacher.html", {"form": form})
+    return render(request, "user/invite_teacher.html", {"form": form})
 
 
 @admin_required
@@ -126,10 +126,10 @@ def invite_student(request):
                 "failures": failures,
                 "dashboard_url": "invite_student",
             }
-            return render(request, "users/invite_success.html", context)
+            return render(request, "user/invite_success.html", context)
     else:
         form = InviteStudentForm()
-    return render(request, "users/invite_student.html", {"form": form})
+    return render(request, "user/invite_student.html", {"form": form})
 
 
 def register(request, token):
@@ -182,7 +182,7 @@ def register(request, token):
             return redirect("dashboard")  # Fallback
     else:
         form = RegisterForm(initial={"email": invitation.email})
-    return render(request, "users/register.html", {"form": form})
+    return render(request, "user/register.html", {"form": form})
 
 
 @admin_required
@@ -195,7 +195,7 @@ def superuser_dashboard(request):
     classes = Subject.objects.all()
     return render(
         request,
-        "users/dashboard.html",
+        "user/dashboard.html",
         {"teachers": teachers, "students": students, "classes": classes},
     )
 
@@ -203,7 +203,7 @@ def superuser_dashboard(request):
 def landing_page(request):
     if request.user.is_authenticated:
         return redirect("role_based_redirect")
-    return render(request, "users/landing.html")
+    return render(request, "user/landing.html")
 
 
 @login_required

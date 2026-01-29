@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from teacher.models import Department, StudentClass, Subject, AcademicSession
-from users.models import Invitation
+from user.models import Invitation
 
 User = get_user_model()
 

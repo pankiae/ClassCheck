@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from users.decorators import student_required
+from user.decorators import student_required
 from .models import Enrollment
 from teacher.models import ClassSession, Attendance
 import datetime

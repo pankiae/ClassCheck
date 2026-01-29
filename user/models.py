@@ -38,6 +38,8 @@ class User(AbstractUser):
 
     objects = CustomUserManager()
 
+    class Meta:
+        db_table = "user"
     class Role(models.TextChoices):
         ADMIN = "ADMIN", "Admin"
         TEACHER = "TEACHER", "Teacher"

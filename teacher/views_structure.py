@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 
-from users.models import Invitation
+from user.models import Invitation
 
 from .models import AcademicSession, Department, StudentClass, Subject
 

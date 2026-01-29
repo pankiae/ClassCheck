@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from student.models import Enrollment
 from teacher.models import AcademicSession, Class, Department, StudentClass, Subject
-from users.models import Invitation, User
+from user.models import Invitation, User
 
 
 class StudentRegistrationTest(TestCase):

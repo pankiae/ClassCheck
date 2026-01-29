@@ -1,6 +1,6 @@
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
-from users.models import Invitation
+from user.models import Invitation
 
 User = get_user_model()
 
@@ -19,7 +19,7 @@ class SuperuserBulkInviteTest(TestCase):
             {"emails": email_string}
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "users/invite_success.html")
+        self.assertTemplateUsed(response, "user/invite_success.html")
         self.assertContains(response, "2") # Success count
         
         self.assertTrue(Invitation.objects.filter(email="teacher1@example.com", role=User.Role.TEACHER).exists())
@@ -32,7 +32,7 @@ class SuperuserBulkInviteTest(TestCase):
             {"emails": email_string}
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "users/invite_success.html")
+        self.assertTemplateUsed(response, "user/invite_success.html")
         
         self.assertTrue(Invitation.objects.filter(email="student1@example.com", role=User.Role.STUDENT).exists())
         self.assertTrue(Invitation.objects.filter(email="student2@example.com", role=User.Role.STUDENT).exists())

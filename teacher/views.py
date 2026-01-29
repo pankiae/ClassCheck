@@ -5,8 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
 from student.models import Enrollment
-from users.decorators import teacher_required
-from users.models import Invitation, User
+from user.decorators import teacher_required
+from user.models import Invitation, User
 
 from .forms_invite import InviteStudentForm
 from .models import Attendance, ClassSchedule, ClassSession, Subject
